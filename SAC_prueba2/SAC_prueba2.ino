@@ -101,14 +101,14 @@ void drawState(State & state)
 
   //line3
   mylcd.setPosition(3,0);
-  mylcd.print(translate(CICLO+3));
+  mylcd.print(translate(CICLO));
   mylcd.print("00:00:00");
   mylcd.print("ON");
   mylcd.print("100%");
   
   //line4
    mylcd.setPosition(4,0);
-  mylcd.print(translate(ST_MAX+2));
+  mylcd.print(translate(ST_MAX));
   mylcd.print((int)state.temps_max);
   mylcd.print("C ");
   mylcd.print(translate(MIN));

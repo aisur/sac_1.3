@@ -59,20 +59,20 @@ enum {
   CICLO,
 };
 
-#define MAX_LANGUAGE 4
+#define MAX_LANGUAGE 2
 typedef struct TranslatedString {
   const char *languages[MAX_LANGUAGE];
 } TranslatedString;
 
 TranslatedString string_db[]={
   /* for languages missing translations, english will be used instead */
-  {{"","",""}},
-  {{"  F.C."",C.C."}},
+  {{"",""}},
+  {{"  F.C.","C.C."}},
   {{"E ","E "}},
   {{"SOIL","HSO:"}},
-  {{"H ","H "," "}},
-  {{"L ","L ","L"}},
-  {{"A ","A ","A"}},
+  {{"H ","H "}},
+  {{"L ","L "}},
+  {{"A ","A "}},
   {{"PU ","RIEGO"}},
   {{"LANGUAGE","IDIOMA"}},
   {{"ENGLISH",         "ESPANOL"}},
@@ -109,10 +109,10 @@ TranslatedString string_db[]={
   {{"CONFIGURATION",   "CONFIGURACION"}},
   {{"Hysteresis: ",  }},
   {{"Log"}},
-  {{"MIN:"}},  {{"MIN:"}},
-  {{"STMAX:"}},  {{"TSMAX:"}},
-  {{"CONSUMPTION:"}},  {{"CONSUMO:"}},
-  {{"CICLE:"}},{{"CICLO:"}}
+  {{"MIN:","MIN:"}},
+  {{"STMAX:","TSMAX:"}},
+  {{"CONSUMPTION:","CONSUMO:"}},
+  {{"CICLE:","CICLO:"}}
 
 };
 
