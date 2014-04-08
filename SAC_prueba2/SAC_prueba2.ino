@@ -86,34 +86,45 @@ void drawState(State & state)
   //Line2
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_S));
+  if(state.moisture_MAX<10)
+    mylcd.print("0");
   mylcd.print((int)state.moisture_MAX);
   mylcd.print("%");
   mylcd.print(translate(MIN));
+  if(state.moisture_MIN<10)
+    mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
   mylcd.print("%");
   mylcd.print("[");
+  if(state.moisture_target<10)
+    mylcd.print("0");
   mylcd.print((int)state.moisture_target);
   mylcd.print("%");
   mylcd.print("]");
-
+  if(state.moisture_target<=99)
+    mylcd.print(" ");
 
  
 
   //line3
   mylcd.setPosition(3,0);
   mylcd.print(translate(CICLO));
-  mylcd.print("00:00:00");
+  mylcd.print("000'00''");
   mylcd.print("ON");
   mylcd.print("100%");
   
   //line4
    mylcd.setPosition(4,0);
   mylcd.print(translate(ST_MAX));
+  if(state.temps_max<10)
+    mylcd.print("0");
   mylcd.print((int)state.temps_max);
-  mylcd.print("C ");
+  mylcd.print(" ");
   mylcd.print(translate(MIN));
+  if(state.temps_min<10)
+  mylcd.print("0");
   mylcd.print((int)state.temps_min);
-  mylcd.print("C ");
+  mylcd.print(" ");
   int currenttemp=state.current_temps;
   if(currenttemp<0){
    mylcd.print("-"); 

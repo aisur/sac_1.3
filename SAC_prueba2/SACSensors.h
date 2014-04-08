@@ -130,8 +130,10 @@ float read_SoilTemp()
  int read_moisture(){
    
   digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
+  
   int cached_moisture = analogRead(MOISTURE_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
+  cached_moisture=  map(cached_moisture,0,7,0,100);
   return cached_moisture;
  }
  
