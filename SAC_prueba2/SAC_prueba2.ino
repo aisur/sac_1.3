@@ -16,6 +16,19 @@
 #define NUM_COLS 20
 #define NUM_ROWS 4
 
+/*
+ * BUTTONS PINS
+ */
+#define BUTTON_UP_PIN 9
+#define BUTTON_CENTER_PIN 8
+#define BUTTON_DOWN_PIN 7
+
+#define BUTTONUP 0
+#define BUTTONDOWN 1
+#define BUTTONCENTER 2
+#define BUTTONCENTERLONG 3
+#define IDLE -1
+
 void drawState(State & state);
 
 SoftwareSerial SSerial(0,LCD_PIN);
@@ -26,6 +39,11 @@ Configuration current_config;
 tmElements_t tm;
 cached_sensors current_sensorsvalues;
 State current_state;
+
+byte button_up_state=LOW;
+byte button_down_state=LOW;
+byte button_center_state=LOW;
+byte center_pressed_state=0;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -34,22 +52,35 @@ void setup()
   Serial.begin(9600);
   SSerial.begin(9600);
   mylcd.begin();
-
+  setup_pings();
   
   
   // setupFlowRate();
  
 
 }
-
+/**
+* setup SAC Pins.
+*/
+void setup_pings(){
+   pinMode(BUTTON_UP_PIN,INPUT);
+   pinMode(BUTTON_DOWN_PIN,INPUT);
+   pinMode(BUTTON_CENTER_PIN,INPUT);
+   
+    pinMode(SOIL_MOISTURE_POWER_PIN, OUTPUT);
+}
 void loop(){
 
 
   RTCread(tm);
-  Serial.print("Bliblablu2");
+
   update_State(current_sensorsvalues,tm);
 
-
+  int event=get_event();
+  
+  Serial.print("Boton :");
+  Serial.println(event);
+  
   State cstate=read_sensors(current_sensorsvalues);
 
   drawState(cstate);
@@ -59,11 +90,93 @@ void loop(){
 
 
   //LCD_Message(&mylcd,"",line2,"","Ultima Linea");
-  delay(2000);
+  delay(250);
 
   // LCD_Clear(&mylcd);
 }
+/*Gets the current Button Event
+* returns: the button that is pressed.
+*  0: button UP is Pressed.
+*  1: button DOWN is Pressed.
+*  2: button CENTER is Pressed minor than 3 seconds.
+*  3: button CENTER is Pressed more than 3 seconds.
+*/
+int get_event(){
+  if(button_up_pressed()==HIGH) return BUTTONUP;
+  if(button_down_pressed()==HIGH) return BUTTONDOWN;
+  return button_center_pressed();
 
+}
+/*
+* Check if button up is pressed. The Event only ocurrs when the button is released; not
+* when button is pressed.
+  returns HIGH when button Up is released or LOW otherwise.
+*/
+int button_up_pressed()
+{
+  byte current_state=digitalRead(BUTTON_UP_PIN);
+  
+  
+  if(button_up_state==HIGH && current_state==LOW){
+    button_up_state=current_state;
+    return HIGH;
+  }else{
+    button_up_state=current_state;
+  return LOW;
+  }
+  
+}
+/*
+* check if button down is pressed. The Event only ocurrs when the Button is released. NOt when
+* the button is Pressed.
+* returns HIGH when the Button is released or LOW otherwise.
+*/
+int button_down_pressed()
+{
+  byte current_state=digitalRead(BUTTON_DOWN_PIN);
+  
+  
+  if(button_down_state==HIGH && current_state==LOW){
+    button_down_state=current_state;
+    return HIGH;
+  }else{
+    button_down_state=current_state;
+  return LOW;
+  }
+}
+/*
+* check if button center is pressed with two states. When is pressed minor than 3 secods or if its pressed
+ more than 3 seconds. The event only ocurr when the button is released. not when is pressed.
+ returns: -1 if is not released, 2 if button is pressed minor than three seconds or 3 if  button is pressed
+ more than 3 seconds.
+ */
+int button_center_pressed()
+{
+  byte current_state=digitalRead(BUTTON_CENTER_PIN);
+  
+  if(current_state==HIGH){
+    center_pressed_state++;
+    return IDLE;
+  }else{
+    if(center_pressed_state<3 and center_pressed_state>0)//4 cicles per second and 3 secconds
+    {
+      center_pressed_state=0;
+      return BUTTONCENTER;
+    }else{
+      if(center_pressed_state!=0){
+      center_pressed_state=0;
+      return BUTTONCENTERLONG;
+      }
+    }
+  }
+    return IDLE;
+  
+}
+
+/**
+* draw the current state at LCD Screen
+* state: current state of sensors.
+*/
 void drawState(State & state)
 {
   //Line1

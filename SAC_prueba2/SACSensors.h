@@ -133,14 +133,14 @@ float read_SoilTemp()
   
   int cached_moisture = analogRead(MOISTURE_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
-  cached_moisture=  map(cached_moisture,0,7,0,100);
+  cached_moisture=  map(cached_moisture,0,602,0,100);
   return cached_moisture;
  }
  
  boolean getWaterLevel(){
 
 	int WaterLevel=analogRead(WTS_PIN);
-	int WaterUp=map(WaterLevel,0,1023,0,1);
+	int WaterUp=map(WaterLevel,0,602,0,1);
 	//Note When We Want analog Water results, change map function
 	return WaterUp>0;
 }
