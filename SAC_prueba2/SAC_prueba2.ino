@@ -12,6 +12,8 @@
 #include "EEPROMUtils.h"
 #include "languages.h"
 #include "SACSensors.h"
+#include "Relay.h"
+
 #define LCD_PIN 11
 #define NUM_COLS 20
 #define NUM_ROWS 4
@@ -318,3 +320,33 @@ void drawState(State & state)
 }
 
 
+
+Relay *find_relay (int role);
+Relay relay[MAX_RELAYS]={{RELAY1_PIN},{RELAY2_PIN},{RELAY3_PIN}};
+
+void update_relay_state (void)
+{
+ int i;
+for (i=0; i < MAX_RELAYS; i++){
+  
+    if (relay[i].role != DISCONNECTED)
+      {
+       Relay rele = relay[i];
+       switch (relay[i].role){
+         case IRRIGATION:
+           {
+             if (current_state.current_moisture > moisture_min && current_state.current_moisture < moisture_target)
+             {
+               if (current_state.current_temps > temps_min && current_state.current_temps < temps_max)
+               {
+                 if (!current_state.field_capacity)
+                {
+                  
+                } 
+               }
+             }
+           }
+       }
+      }
+}
+      
