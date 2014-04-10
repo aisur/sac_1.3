@@ -127,4 +127,9 @@ tmElements_t parseTimeAndHour(char * td)
   }
   return tm;
 }
-
+long time_between(tmElements_t time1, tmElements_t time2)
+{
+  long nminutes1=  numberOfMinutes(makeTime(time1));
+  long nminutes2=  numberOfMinutes(makeTime(time2));
+  return (nminutes2-nminutes1);
+}

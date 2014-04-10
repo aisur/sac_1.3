@@ -59,7 +59,7 @@ typedef struct {
 	/**
 	 * current moisture
 	 */
-	float current_mositure;
+	float current_moisture;
 	/*
 	 * Max Soil Temperature
 	 */
@@ -188,7 +188,8 @@ State read_sensors(cached_sensors & last_values)
 	/* set the state */
 	current_state.moisture_MAX=last_values.cached_maxmoisture;
 	current_state.moisture_MIN=last_values.cached_minmoisture;
-        current_state.moisture_target=last_values.cached_moisture;
+
+        current_state.current_moisture=last_values.cached_moisture;
 	current_state.consumption=last_values.cached_flowvolume;
 	current_state.current_temps=last_values.cached_temperature;
 	current_state.moisture_target=last_values.cached_moisture;
@@ -212,4 +213,11 @@ cached_sensors initSensorsCache(){
    current_sensors.cached_tempmax=0;
    current_sensors.cached_minmoisture=0;
    current_sensors.cached_maxmoisture=0;
+}
+boolean state_changed(State state1,State state2)
+{
+   if(state1.current_moisture!= state2.current_moisture ) return true;
+   if(state1.current_temps!= state2.current_temps ) return true;
+   if(state1.field_capacity!= state2.field_capacity ) return true;
+   return false;
 }
