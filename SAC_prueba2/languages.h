@@ -60,6 +60,7 @@ enum {
   S_DATE,
   S_HOUR,
   S_SATCALIBRATION,
+  S_SPANOL
 };
 
 #define MAX_LANGUAGE 2
@@ -78,7 +79,7 @@ TranslatedString string_db[]={
   {{"A ","A "}},
   {{"PU ","RIEGO"}},
   {{"LANGUAGE","IDIOMA"}},
-  {{"ENGLISH",         "ESPANOL"}},
+  {{"ENGLISH",         "INGLES"}},
   {{"<enabled>",       "<activar>"}},
   {{"<disabled>",      "<inhabilitado>"}},
   {{"TIME",            "HORA"}},
@@ -117,7 +118,9 @@ TranslatedString string_db[]={
   {{"CONSUMPTION:","CONSUMO:"}},
   {{"CICLE:","CICLO:"}},
   {{"DATE","FECHA"}},
-  {{"HOUR","HORA"}}
+  {{"HOUR","HORA"}},
+  {{"SAT CALIBRATION","CALIBRATION SAT"}},
+  {{"SPANISH","ESPANOL"}}
 
 };
 
