@@ -31,9 +31,8 @@
 #define BUTTONCENTERLONG 3
 #define IDLE -1
 
-#define TIEMPOACTUALIZAR 1*60*1000
-
 void drawState(State & state);
+<<<<<<< HEAD
 enum States
 {
   INICIO,
@@ -65,20 +64,25 @@ MenuItem main_menu[]={{S_LANGUAGE,IDIOMA},{S_DATE,FECHA},
                       {S_HOUR,HORA},{S_SATCALIBRATION,CALIBRACION_SAT},
                       {S_RESET,RESET_CONFIG},{S_RETURN_TO,END_SELECTION}};
 int current_menu;
+=======
+>>>>>>> FETCH_HEAD
 
 SoftwareSerial SSerial(0,LCD_PIN);
 SerLCD mylcd(SSerial,NUM_COLS,NUM_ROWS);
 
-boolean actualizar_pantalla;
+
 Configuration current_config;
 tmElements_t tm;
 cached_sensors current_sensorsvalues;
 State current_state;
+<<<<<<< HEAD
 State previous_state;
 tmElements_t lastUpdate;
 boolean irrigating;
 int current_mstate;
 int current_selectionstate;
+=======
+>>>>>>> FETCH_HEAD
 
 byte button_up_state=LOW;
 byte button_down_state=LOW;
@@ -93,11 +97,17 @@ void setup()
   SSerial.begin(9600);
   mylcd.begin();
   setup_pings();
-  actualizar_pantalla=true;
+  
+  
   // setupFlowRate();
+<<<<<<< HEAD
   current_mstate=ESTADO;
   irrigating=false;
   current_selectionstate=MENU;
+=======
+ 
+
+>>>>>>> FETCH_HEAD
 }
 /**
  * setup SAC Pins.
@@ -113,6 +123,7 @@ void loop(){
 
 
   RTCread(tm);
+<<<<<<< HEAD
 
   update_State(current_sensorsvalues,tm);
   current_state=read_sensors(current_sensorsvalues);
@@ -124,9 +135,13 @@ void loop(){
   else{
     actualizar_pantalla=false; 
   }
+=======
+>>>>>>> FETCH_HEAD
 
+  update_State(current_sensorsvalues,tm);
 
   int event=get_event();
+<<<<<<< HEAD
 
 
 
@@ -136,6 +151,16 @@ void loop(){
 
   Serial.print("boton ");
   Serial.println(event);
+=======
+  
+  Serial.print("Boton :");
+  Serial.println(event);
+  
+  State cstate=read_sensors(current_sensorsvalues);
+
+  drawState(cstate);
+  
+>>>>>>> FETCH_HEAD
 
 
 
@@ -210,9 +235,14 @@ int button_center_pressed()
   if(current_state==HIGH){
     center_pressed_state++;
     return IDLE;
+<<<<<<< HEAD
   }
   else{
     if(center_pressed_state<12 and center_pressed_state>0)//4 cicles per second and 3 secconds
+=======
+  }else{
+    if(center_pressed_state<3 and center_pressed_state>0)//4 cicles per second and 3 secconds
+>>>>>>> FETCH_HEAD
     {
       center_pressed_state=0;
       return BUTTONCENTER;
@@ -227,6 +257,7 @@ int button_center_pressed()
   return IDLE;
 
 }
+<<<<<<< HEAD
 void handleEvent(int event)
 {
   switch(current_mstate)
@@ -308,6 +339,9 @@ void drawMenu()
      Serial.println(i);
   }
 }
+=======
+
+>>>>>>> FETCH_HEAD
 /**
  * draw the current state at LCD Screen
  * state: current state of sensors.
@@ -315,7 +349,11 @@ void drawMenu()
 void drawState(State & state)
 {
   //Line1
+<<<<<<< HEAD
   long mil1=  millis();
+=======
+  
+>>>>>>> FETCH_HEAD
   mylcd.setPosition(1,0);
   if(tm.Hour<10) mylcd.print("0");
   mylcd.print(tm.Hour);
@@ -346,7 +384,7 @@ void drawState(State & state)
   mylcd.print("[");
   if(state.moisture_target<10)
     mylcd.print("0");
-  mylcd.print((int)state.current_moisture);
+  mylcd.print((int)state.moisture_target);
   mylcd.print("%");
   mylcd.print("]");
   if(state.moisture_target<=99)
@@ -383,9 +421,7 @@ void drawState(State & state)
   mylcd.print(currenttemp);
   mylcd.print("C");
   //Serial.println(line1);
-  long mil2=millis();
-  long total=mil2-mil1;
-  Serial.println(total);
+  
   //LCD_Message(&mylcd,line1,line2,line3,"bb");
 }
 
