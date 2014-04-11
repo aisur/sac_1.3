@@ -326,6 +326,12 @@ void handleEventSelection(int event)
            current_menu++;
            current_menu= current_menu%MAXMENUITEMS;
          }
+         if(event==BUTTONUP)
+         {
+           mylcd.clear();
+           current_menu=(current_menu==0)? MAXMENUITEMS-1: current_menu-1;
+           current_menu= current_menu%MAXMENUITEMS;
+         }
          break;
        case IDIOMA:
          if(event == BUTTONCENTER)
@@ -345,6 +351,8 @@ void handleEventSelection(int event)
          break;
       case END_SELECTION:
           current_mstate=ESTADO;
+          current_selectionstate=MENU;
+          actualizar_pantalla=true;
         break;
     }
 }
@@ -382,8 +390,12 @@ void drawSelectLanguage()
   mylcd.setPosition(1,0);
   printTitle(translate(S_LANGUAGE));
   mylcd.setPosition(2,0);
+  if(select_language==0)
+    mylcd.print("*");
   mylcd.print(translate(S_ENGLISH));
   mylcd.setPosition(3,0);
+  if(select_language==1)
+    mylcd.print("*");
   mylcd.print(translate(S_SPANOL));
 }
 void drawMenu()
