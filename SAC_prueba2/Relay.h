@@ -27,15 +27,19 @@
 
 #include "Arduino.h"
 
-#define MAX_RELAYS 4
-typedef enum _RelayState RelayState;
-typedef struct _Relay Relay;
-
+#define MAX_RELAYS 3
+#define RELAY1_PIN 5
+#define RELAY2_PIN 6
+#define RELAY3_PIN 4
   enum _RelayState {
     RELAY_OFF,
     RELAY_ON,
     RELAY_WAITING  /* we're off duty in our cycle */
  };
+typedef enum _RelayState RelayState;
+typedef struct _Relay Relay;
+
+
   
   struct _Relay {
   int gpio_pin;

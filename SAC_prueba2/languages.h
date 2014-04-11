@@ -57,6 +57,9 @@ enum {
   ST_MAX,
   CONSUMPTION,
   CICLO,
+  S_DATE,
+  S_HOUR,
+  S_SATCALIBRATION,
 };
 
 #define MAX_LANGUAGE 2
@@ -112,7 +115,9 @@ TranslatedString string_db[]={
   {{"MIN:","MIN:"}},
   {{"STMAX:","TSMAX:"}},
   {{"CONSUMPTION:","CONSUMO:"}},
-  {{"CICLE:","CICLO:"}}
+  {{"CICLE:","CICLO:"}},
+  {{"DATE","FECHA"}},
+  {{"HOUR","HORA"}}
 
 };
 

@@ -42,6 +42,7 @@ typedef struct{
   float temps_max;//maximum Soil temperature
   float temps_min;//Minimum Soil Temperature
   int pump_cicle_length;//Pumping Cicle Length in minutes.
+  int pump_percent;//Pumping cicle irrigation percent.
   float moisture_calib;//moisture calibration
   int check_interval; //Interval Check for update the Sensors
   int flow_diameter;//Flow Diameter for Flow Size Sensor
