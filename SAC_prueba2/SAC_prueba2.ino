@@ -13,7 +13,9 @@
 #include "languages.h"
 #include "SACSensors.h"
 #include "Relay.h"
-
+/*
+*LCD CONFIG & PINS
+*/
 #define LCD_PIN 11
 #define NUM_COLS 20
 #define NUM_ROWS 4
@@ -35,6 +37,9 @@
 
 void drawState(State & state);
 
+/*
+ * DIFFERENT STATES TO MOVE THROUGH MENU
+ */
 enum States
 {
   INICIO,
@@ -44,7 +49,9 @@ enum States
   EDICION,
   SELECCION,
 };
-
+/*
+ * DIFFERENT STATES IN SELECTION MODE
+ */
 enum Seleccion_States
 {
    MENU,
@@ -55,6 +62,9 @@ enum Seleccion_States
    RESET_CONFIG,
    END_SELECTION
 };
+/*
+ * DIFFERENT STATES IN SELECTION MODE FOR DATE MENU
+ */
 enum selectionDateStates
 {
    DAY,
@@ -63,6 +73,9 @@ enum selectionDateStates
 SAVE,
 BACK
 };
+/*
+ * DIFFERENT STATES IN SELECTION MODE FOR TIME MENU
+ */
 enum s_selectionTimeStates
 {
   S_SELECTHOURS,
@@ -70,6 +83,9 @@ enum s_selectionTimeStates
   S_SAVETIME,
   S_BACKTIME 
 };
+/*
+ * MENU STRUCTURE 
+ */
 typedef struct MenuItem
 {
    int label;
@@ -83,17 +99,23 @@ MenuItem main_menu[]={{S_LANGUAGE,IDIOMA},{S_DATE,FECHA},
 int current_menu;
 
 int select_language;
-
+/*
+ * LCD PIN SETUP & CONFIG
+ */
 SoftwareSerial SSerial(0,LCD_PIN);
 SerLCD mylcd(SSerial,NUM_COLS,NUM_ROWS);
-
+/*
+ * VALUES, STATES & CONFIG
+ */
 boolean actualizar_pantalla;
 Configuration current_config;
 tmElements_t tm;
 cached_sensors current_sensorsvalues;
 State current_state;
 State previous_state;
-
+/*
+ * GLOBAL VARIABLES
+ */
 tmElements_t lastUpdate;
 boolean irrigating;
 byte current_mstate;
@@ -112,7 +134,7 @@ void setup()
   Serial.begin(9600);
   SSerial.begin(9600);
   mylcd.begin();
-  setup_pings();
+  setup_pins();
   actualizar_pantalla=true;
   // setupFlowRate();
 
@@ -124,7 +146,7 @@ void setup()
 /**
  * setup SAC Pins.
  */
-void setup_pings(){
+void setup_pins(){
   pinMode(BUTTON_UP_PIN,INPUT);
   pinMode(BUTTON_DOWN_PIN,INPUT);
   pinMode(BUTTON_CENTER_PIN,INPUT);
@@ -136,7 +158,7 @@ void loop(){
 
   RTCread(tm);
 
-
+  //ALWAYS UPDATE SCREEN WHEN STATE CHANGES
   update_State(current_sensorsvalues,tm);
   current_state=read_sensors(current_sensorsvalues);
   if(state_changed(current_state,previous_state) || time_between(lastUpdate,tm)>1){
@@ -263,7 +285,11 @@ int button_center_pressed()
 
 }
 
-
+/*
+ * HANDLE EVENTS FOR STATE SCREEN & SELECT MODE
+ * CASE ESTADO: STATUS SCREEN, DEFAULT VIEW.
+ * CASE SELECCION: SELECTION STATE, CALLS THE EVENT HANDLER FOR THIS STATE
+ */
 void handleEvent(int event)
 {
   switch(current_mstate)
@@ -284,12 +310,23 @@ void handleEvent(int event)
     break;
   }
 }
+/*
+ * PRINTS MENU TITLE
+ */
 void printTitle(const char * message)
 {
     mylcd.print("***");
     mylcd.print(message);
     mylcd.print("***");
 }
+/*
+ * EVENT HANDLER FOR EACH SELECTION STATE
+ * MENU: MOVE & INTERACT WITH MENU
+ * IDIOMA: LANGUAGE SELECTION MENU
+ * FECHA: DATE CONFIG MENU
+ * HORA: TIME CONFIG MENU
+ * END SELECTION: EXITS SELECTION STATE
+ */
 void handleEventSelection(int event)
 {
     switch(current_selectionstate)
@@ -372,6 +409,9 @@ void handleEventSelection(int event)
         break;
     }
 }
+/*
+ * DRAWS  INTERFACE IN STATUS MODE & SELECTION MODE
+ */
 void drawUI(State & state){
   if(actualizar_pantalla){
   switch(current_mstate)
@@ -390,7 +430,9 @@ void drawUI(State & state){
   
 }
 
-
+/*
+ * DRAWS INTERFACE FOR THE DIFFERENT MENUS
+ */
 void drawSeleccion()
 {
   
@@ -411,6 +453,9 @@ void drawSeleccion()
   }
  
 }
+/*
+ * DRAWS LANGUAGE SELECTION MENU
+ */
 void drawSelectLanguage()
 {
   mylcd.setPosition(1,0);
@@ -424,6 +469,9 @@ void drawSelectLanguage()
     mylcd.print("*");
   mylcd.print(translate(S_SPANOL));
 }
+/*
+ * DRAWS MENU
+ */
 void drawMenu()
 {
    mylcd.setPosition(1,0);
@@ -443,7 +491,7 @@ void drawMenu()
 }
 
 /**
- * draw the current state at LCD Screen
+ * draws the current state at LCD Screen
  * state: current state of sensors.
  */
 void drawState(State & state)
@@ -523,7 +571,10 @@ void drawState(State & state)
   //LCD_Message(&mylcd,line1,line2,line3,"bb");
 }
 
-
+/*
+ * RELAY CONFIG
+ *EACH RELAY USES A ROLE TO CONTROL IT'S FUNCTIONS
+ */
 
 Relay *find_relay (int role);
 Relay relay[MAX_RELAYS]={
@@ -534,7 +585,9 @@ Relay relay[MAX_RELAYS]={
   ,{
     RELAY3_PIN  }
 };
-
+/*
+ * ALWAYS LISTENS TO RELAYS STATES IN EACH ROLE
+ */
 void update_relay_state (void)
 {
   int i;
@@ -565,6 +618,12 @@ void update_relay_state (void)
     }
   }
 }
+/*
+ * CHECK IRRIGATION CICLE DURATION.
+ * IRRIGATION IS CONFIGURABLE TO BE ON CONTINOUS MODE OR AT INTERVALS
+ * BY INDICATING PUMP PERCENTAGE.
+ * EXAMPLE: PUMP DURING FOUR MINUTES AT 50%. PUMPING WOULD BE ONE MINUTES ON & ONE MINUTES OFF, UNTIL COMPLETION OF THE CICLE OF FOUR MINUTES;
+ */
 boolean checkPumpCicle(boolean irrigating,tmElements_t time1,tmElements_t time2){
     int cicleLength=current_config.pump_cicle_length;
     int pumppercent= current_config.pump_percent;
@@ -575,6 +634,9 @@ boolean checkPumpCicle(boolean irrigating,tmElements_t time1,tmElements_t time2)
      irrigating= !irrigating;
      return irrigating;
 } 
+/*
+ * DRAW TIME SELECTION MENU
+ */
 void drawTime()
 {
       mylcd.setPosition(1,0);
@@ -600,6 +662,9 @@ void drawTime()
 //        break;
 //     }
 }
+/*
+ * DRAW DATE SELECTION MENU
+ */
 void drawDate()
 {
 
