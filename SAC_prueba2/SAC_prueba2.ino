@@ -402,6 +402,15 @@ void handleEventSelection(int event)
         }
       }
       break;
+      case HORA:
+       if(event==BUTTONDOWN)
+       {
+         actualizar_pantalla=true;
+         cTime++;
+         cTime%= 4; 
+         
+       }
+      break;
       case END_SELECTION:
           current_mstate=ESTADO;
           current_selectionstate=MENU;
@@ -468,6 +477,7 @@ void drawSelectLanguage()
   if(select_language==1)
     mylcd.print("*");
   mylcd.print(translate(S_SPANOL));
+  mylcd.print(F(" "));
 }
 /*
  * DRAWS MENU
@@ -648,19 +658,28 @@ void drawTime()
       if(tm.Minute<10) mylcd.print("0");
       mylcd.print(tm.Minute);
       mylcd.setPosition(3,0);
-      if(cTime==S_SELECTHOURS)
+      if(cTime==S_SAVETIME)
        mylcd.print("*");
       mylcd.print(translate(S_SAVE));
-//     switch(current_selectionTimeState)
-//     {
-//       case HOURS:
-//       mylcd.setPosition(2,1);
-//       mylcd.boxCursorOn(); 
-//       break;
-//       default:
-//        mylcd.boxCursorOff();
-//        break;
-//     }
+      mylcd.print(F(" "));
+      mylcd.setPosition(4,0);
+      if(cTime==S_BACKTIME)
+       mylcd.print(F("*"));
+      mylcd.print(translate(S_RETURN_TO));
+     switch(cTime)
+     {
+       case S_SELECTHOURS:
+         mylcd.setPosition(2,1);
+         mylcd.boxCursorOn(); 
+       break;
+       case S_SELECTMINUTES:
+          mylcd.setPosition(2,4);
+          mylcd.boxCursorOn();
+          break;
+       default:
+        mylcd.boxCursorOff();
+        break;
+     }
 }
 /*
  * DRAW DATE SELECTION MENU
