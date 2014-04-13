@@ -126,6 +126,8 @@ byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
 byte center_pressed_state=0;
+byte editHours;
+byte editMinutes;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -340,6 +342,8 @@ void handleEventSelection(int event)
             select_language=0;
             current_selectionDateState=0;
             actualizar_pantalla=true;
+            editHours=tm.Hour;
+            editMinutes=tm.Minute;
            // current_selectTimeState=SELECTHOURS;
             Serial.println("EN MENU");
            
@@ -403,13 +407,8 @@ void handleEventSelection(int event)
       }
       break;
       case HORA:
-       if(event==BUTTONDOWN)
-       {
-         actualizar_pantalla=true;
-         cTime++;
-         cTime%= 4; 
-         
-       }
+       
+      handleEventSelectionHour(event);
       break;
       case END_SELECTION:
           current_mstate=ESTADO;
@@ -417,6 +416,37 @@ void handleEventSelection(int event)
           actualizar_pantalla=true;
         break;
     }
+}
+void handleEventSelectionHour(int event)
+{
+ switch(cTime)
+  {
+    case S_BACKTIME:
+    if(event==BUTTONCENTER){
+         current_selectionstate=MENU;
+         actualizar_pantalla=true;
+         current_menu=0;
+         mylcd.clear();
+         cTime=S_SELECTHOURS;
+    }
+    break;
+    default:
+      if(event==BUTTONDOWN)
+       {
+         actualizar_pantalla=true;
+         cTime++;
+         cTime%= 4; 
+         
+       }
+       if(event==BUTTONUP)
+       {
+         actualizar_pantalla=true;
+         cTime--;
+         cTime= (cTime<0)?4:cTime%4; 
+         
+       }
+    break;
+  } 
 }
 /*
  * DRAWS  INTERFACE IN STATUS MODE & SELECTION MODE
@@ -653,10 +683,10 @@ void drawTime()
       printTitle(translate(S_HOUR));
       mylcd.setPosition(2,0);
       if(tm.Hour<10) mylcd.print("0");
-      mylcd.print(tm.Hour);
+      mylcd.print(editHours);
       mylcd.print(":");
       if(tm.Minute<10) mylcd.print("0");
-      mylcd.print(tm.Minute);
+      mylcd.print(editMinutes);
       mylcd.setPosition(3,0);
       if(cTime==S_SAVETIME)
        mylcd.print("*");
