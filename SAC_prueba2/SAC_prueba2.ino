@@ -63,12 +63,12 @@ enum selectionDateStates
 SAVE,
 BACK
 };
-enum selectionTimeStates
+enum s_selectionTimeStates
 {
-  HOUR,
-  MINUTES,
-  SAVETIME,
-  BACKTIME 
+  S_SELECTHOURS,
+  S_SELECTMINUTES,
+  S_SAVETIME,
+  S_BACKTIME 
 };
 typedef struct MenuItem
 {
@@ -93,15 +93,13 @@ tmElements_t tm;
 cached_sensors current_sensorsvalues;
 State current_state;
 State previous_state;
-int editDay;
-int editMonth;
-int editYear;
+
 tmElements_t lastUpdate;
 boolean irrigating;
-int current_mstate;
-int current_selectionstate;
-int current_selectionDateState;
-int current_selectionTimeState;
+byte current_mstate;
+byte current_selectionstate;
+byte current_selectionDateState;
+byte cTime=S_SELECTHOURS;
 byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
@@ -160,13 +158,11 @@ void loop(){
   drawUI(current_state);
 
 
-  Serial.print("Boton :");
-  Serial.println(event);
-  
+ 
   State cstate=read_sensors(current_sensorsvalues);
 
   
-
+  Serial.println(freeRam());
 
 
 
@@ -175,6 +171,12 @@ void loop(){
   delay(250);
 
   // LCD_Clear(&mylcd);
+}
+int freeRam()
+{
+extern int __heap_start, *__brkval;
+int v;
+return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
 }
 /*Gets the current Button Event
  * returns: the button that is pressed.
@@ -301,9 +303,8 @@ void handleEventSelection(int event)
             select_language=0;
             current_selectionDateState=0;
             actualizar_pantalla=true;
-            
-            //editMonth=tm.Month;
-            //editYear=tmYearToCalendar(tm.Year);
+           // current_selectTimeState=SELECTHOURS;
+            Serial.println("EN MENU");
            
          }
          if(event==BUTTONDOWN)
@@ -332,10 +333,12 @@ void handleEventSelection(int event)
          if(event== BUTTONUP)
          {
             select_language--; 
+            actualizar_pantalla=true;            
          }
          if(event==BUTTONDOWN)
          {
            select_language++; 
+           actualizar_pantalla=true;
          }
          break;
          
@@ -426,8 +429,7 @@ void drawMenu()
    mylcd.setPosition(1,0);
   printTitle(translate(S_MAIN_MENU));
   int position=2;
-  Serial.print("Menu");
-  Serial.println(current_menu);
+
   for(int i=current_menu; i<(current_menu+3) && i<MAXMENUITEMS;i++)
   {
      
@@ -436,7 +438,7 @@ void drawMenu()
       mylcd.print("*");
      mylcd.print(translate(main_menu[i].label)); 
      position++;
-     Serial.println(i);
+   //  Serial.println(i);
   }
 }
 
@@ -583,7 +585,20 @@ void drawTime()
       mylcd.print(":");
       if(tm.Minute<10) mylcd.print("0");
       mylcd.print(tm.Minute);
-     
+      mylcd.setPosition(3,0);
+      if(cTime==S_SELECTHOURS)
+       mylcd.print("*");
+      mylcd.print(translate(S_SAVE));
+//     switch(current_selectionTimeState)
+//     {
+//       case HOURS:
+//       mylcd.setPosition(2,1);
+//       mylcd.boxCursorOn(); 
+//       break;
+//       default:
+//        mylcd.boxCursorOff();
+//        break;
+//     }
 }
 void drawDate()
 {
