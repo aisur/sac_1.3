@@ -61,7 +61,9 @@ enum {
   S_HOUR,
   S_SATCALIBRATION,
   S_SPANOL,
-  S_SAVE
+  S_SAVE,
+  S_EDITDAY,
+  S_EDITHOUR
 };
 
 #define MAX_LANGUAGE 2
@@ -122,7 +124,9 @@ TranslatedString string_db[]={
   {{"HOUR","HORA"}},
   {{"SAT CALIBRATION","CALIBRATION SAT"}},
   {{"SPANISH","ESPANOL"}},
-  {{"SAVE","GUARDAR"}}
+  {{"SAVE","GUARDAR"}},
+  {{"EDIT DAY","EDITAR DIA"}},
+  {{"EDIT HOUR","EDITAR HORA"}}
 
 };
 

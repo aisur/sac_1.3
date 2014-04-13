@@ -128,6 +128,7 @@ byte button_center_state=LOW;
 byte center_pressed_state=0;
 byte editHours;
 byte editMinutes;
+boolean isEditing;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -154,6 +155,7 @@ void setup_pins(){
   pinMode(BUTTON_CENTER_PIN,INPUT);
 
   pinMode(SOIL_MOISTURE_POWER_PIN, OUTPUT);
+  isEditing=false;
 }
 void loop(){
 
@@ -179,14 +181,15 @@ void loop(){
   
 
   handleEvent(event);
+  State cstate=read_sensors(current_sensorsvalues);
   drawUI(current_state);
 
 
  
-  State cstate=read_sensors(current_sensorsvalues);
+  
 
   
-  Serial.println(freeRam());
+  //Serial.println(freeRam());
 
 
 
@@ -344,8 +347,9 @@ void handleEventSelection(int event)
             actualizar_pantalla=true;
             editHours=tm.Hour;
             editMinutes=tm.Minute;
+            isEditing=false;
            // current_selectTimeState=SELECTHOURS;
-            Serial.println("EN MENU");
+        
            
          }
          if(event==BUTTONDOWN)
@@ -407,8 +411,10 @@ void handleEventSelection(int event)
       }
       break;
       case HORA:
-       
-      handleEventSelectionHour(event);
+       if(isEditing) 
+         handleEventEditingHour(event);
+       else
+        handleEventSelectionHour(event);
       break;
       case END_SELECTION:
           current_mstate=ESTADO;
@@ -430,6 +436,14 @@ void handleEventSelectionHour(int event)
          cTime=S_SELECTHOURS;
     }
     break;
+    case S_SAVETIME:
+      if(event==BUTTONCENTER)
+      {
+      tm.Hour=editHours;
+      tm.Minute=editMinutes;
+      setHour(tm);
+      }
+    break;
     default:
       if(event==BUTTONDOWN)
        {
@@ -445,9 +459,42 @@ void handleEventSelectionHour(int event)
          cTime= (cTime<0)?4:cTime%4; 
          
        }
+       if(event==BUTTONCENTER)
+       {
+          actualizar_pantalla=true;
+          isEditing=true;
+          mylcd.clear();
+       }
     break;
   } 
 }
+void handleEventEditingHour(int event)
+{
+   switch(cTime)
+  {
+     case S_SELECTHOURS:
+         if(event==BUTTONDOWN){
+             editHours++;
+             editHours%= 24;
+             actualizar_pantalla=true;
+         }
+         if(event==BUTTONUP){
+             editHours--;
+             editHours=(editHours<0)?23:editHours%24;
+             actualizar_pantalla=true;
+         }
+       
+       default:
+        if(event==BUTTONCENTER){
+            isEditing=false;
+            actualizar_pantalla=true;
+            mylcd.clear();
+        }
+       break; 
+   }
+   
+}
+
 /*
  * DRAWS  INTERFACE IN STATUS MODE & SELECTION MODE
  */
@@ -487,7 +534,10 @@ void drawSeleccion()
       drawDate();
       break;
     case HORA:
-      drawTime();
+      if(!isEditing)
+          drawTime();
+      else
+          drawEditingTime(cTime);
       break;
   }
  
@@ -607,7 +657,7 @@ void drawState(State & state)
   //Serial.println(line1);
   long mil2=millis();
   long total=mil2-mil1;
-  Serial.println(total);
+  //Serial.println(total);
   //LCD_Message(&mylcd,line1,line2,line3,"bb");
 }
 
@@ -682,10 +732,10 @@ void drawTime()
       mylcd.setPosition(1,0);
       printTitle(translate(S_HOUR));
       mylcd.setPosition(2,0);
-      if(tm.Hour<10) mylcd.print("0");
+      if(editHours<10) mylcd.print("0");
       mylcd.print(editHours);
       mylcd.print(":");
-      if(tm.Minute<10) mylcd.print("0");
+      if(editMinutes<10) mylcd.print("0");
       mylcd.print(editMinutes);
       mylcd.setPosition(3,0);
       if(cTime==S_SAVETIME)
@@ -765,4 +815,23 @@ void drawDate()
       }
       
       
+}
+void drawEditingTime(byte currentTimeState)
+{
+   switch(currentTimeState)
+   {
+     
+       case S_SELECTHOURS:
+         mylcd.setPosition(1,0);
+         printTitle(translate(S_EDITHOUR));
+         mylcd.setPosition(2,0);
+         if(editHours<10)
+          mylcd.print(F("0"));
+         mylcd.print(editHours);
+         mylcd.boxCursorOff();
+         mylcd.setPosition(2,1);
+         mylcd.boxCursorOn();
+         break;
+         
+    }
 }
