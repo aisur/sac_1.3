@@ -427,6 +427,14 @@ void handleEventSelectionHour(int event)
 {
  switch(cTime)
   {
+     case S_SAVETIME:
+      if(event==BUTTONCENTER)
+      {
+      tm.Hour=editHours;
+      tm.Minute=editMinutes;
+      setHour(tm);
+      break;
+      }
     case S_BACKTIME:
     if(event==BUTTONCENTER){
          current_selectionstate=MENU;
@@ -434,16 +442,9 @@ void handleEventSelectionHour(int event)
          current_menu=0;
          mylcd.clear();
          cTime=S_SELECTHOURS;
+         break;
     }
-    break;
-    case S_SAVETIME:
-      if(event==BUTTONCENTER)
-      {
-      tm.Hour=editHours;
-      tm.Minute=editMinutes;
-      setHour(tm);
-      }
-    break;
+   
     default:
       if(event==BUTTONDOWN)
        {
@@ -483,7 +484,17 @@ void handleEventEditingHour(int event)
              editHours=(editHours<0)?23:editHours%24;
              actualizar_pantalla=true;
          }
-       
+       case S_SELECTMINUTES:
+         if(event==BUTTONDOWN){
+             editMinutes++;
+             editMinutes%= 60;
+             actualizar_pantalla=true;
+         }
+         if(event==BUTTONUP){
+             editMinutes--;
+             editMinutes=(editMinutes<0)?259:editMinutes%60;
+             actualizar_pantalla=true;
+         }
        default:
         if(event==BUTTONCENTER){
             isEditing=false;
@@ -828,6 +839,17 @@ void drawEditingTime(byte currentTimeState)
          if(editHours<10)
           mylcd.print(F("0"));
          mylcd.print(editHours);
+         mylcd.boxCursorOff();
+         mylcd.setPosition(2,1);
+         mylcd.boxCursorOn();
+         break;
+        case S_SELECTMINUTES:
+        mylcd.setPosition(1,0);
+         printTitle(translate(S_EDITMINUTES));
+         mylcd.setPosition(2,0);
+         if(editMinutes<10)
+          mylcd.print(F("0"));
+         mylcd.print(editMinutes);
          mylcd.boxCursorOff();
          mylcd.setPosition(2,1);
          mylcd.boxCursorOn();

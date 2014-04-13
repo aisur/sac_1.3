@@ -63,7 +63,8 @@ enum {
   S_SPANOL,
   S_SAVE,
   S_EDITDAY,
-  S_EDITHOUR
+  S_EDITHOUR,
+  S_EDITMINUTES
 };
 
 #define MAX_LANGUAGE 2
@@ -126,7 +127,8 @@ TranslatedString string_db[]={
   {{"SPANISH","ESPANOL"}},
   {{"SAVE","GUARDAR"}},
   {{"EDIT DAY","EDITAR DIA"}},
-  {{"EDIT HOUR","EDITAR HORA"}}
+  {{"EDIT HOUR","EDITAR HORA"}},
+  {{"EDIT MINUTES","EDITAR MINUTOS"}}
 
 };
 
