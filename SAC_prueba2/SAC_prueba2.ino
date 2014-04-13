@@ -351,6 +351,12 @@ void drawSeleccion()
     case IDIOMA:
      drawSelectLanguage();
      break;
+     case FECHA:
+      drawDate();
+      break;
+    case HORA:
+      drawTime();
+      break;
   }
  
 }
@@ -519,4 +525,29 @@ boolean checkPumpCicle(boolean irrigating,tmElements_t time1,tmElements_t time2)
      irrigating= !irrigating;
      return irrigating;
 } 
+void drawTime()
+{
+      mylcd.setPosition(1,0);
+      printTitle(translate(S_HOUR));
+      mylcd.setPosition(2,0);
+      if(tm.Hour<10) mylcd.print("0");
+      mylcd.print(tm.Hour);
+      mylcd.print(":");
+      if(tm.Minute<10) mylcd.print("0");
+      mylcd.print(tm.Minute);
+}
+void drawDate()
+{
 
+
+      mylcd.setPosition(1,0);
+      printTitle(translate(S_DATE));
+      mylcd.setPosition(2,0);
+      if(tm.Day<10) mylcd.print("0");
+      mylcd.print(tm.Day);
+      mylcd.print("/");
+      if(tm.Month<10) mylcd.print("0");
+      mylcd.print(tm.Month);
+      mylcd.print("/");
+      mylcd.print(tmYearToCalendar(tm.Year));
+}
