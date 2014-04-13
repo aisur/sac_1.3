@@ -34,10 +34,7 @@
 #define TIEMPOACTUALIZAR 1*60*1000
 
 void drawState(State & state);
-<<<<<<< HEAD
 
-=======
->>>>>>> FETCH_HEAD
 enum States
 {
   INICIO,
@@ -70,11 +67,9 @@ MenuItem main_menu[]={{S_LANGUAGE,IDIOMA},{S_DATE,FECHA},
                       {S_RESET,RESET_CONFIG},{S_RETURN_TO,END_SELECTION}};
                  
 int current_menu;
-<<<<<<< HEAD
 
-=======
 int select_language;
->>>>>>> FETCH_HEAD
+
 SoftwareSerial SSerial(0,LCD_PIN);
 SerLCD mylcd(SSerial,NUM_COLS,NUM_ROWS);
 
@@ -104,20 +99,11 @@ void setup()
   setup_pings();
   actualizar_pantalla=true;
   // setupFlowRate();
-<<<<<<< HEAD
 
   current_mstate=ESTADO;
   irrigating=false;
   current_selectionstate=MENU;
 
- 
-
-
-=======
-  current_mstate=ESTADO;
-  irrigating=false;
-  current_selectionstate=MENU;
->>>>>>> FETCH_HEAD
 }
 /**
  * setup SAC Pins.
@@ -133,10 +119,7 @@ void loop(){
 
 
   RTCread(tm);
-<<<<<<< HEAD
 
-=======
->>>>>>> FETCH_HEAD
 
   update_State(current_sensorsvalues,tm);
   current_state=read_sensors(current_sensorsvalues);
@@ -148,36 +131,24 @@ void loop(){
   else{
     actualizar_pantalla=false; 
   }
-<<<<<<< HEAD
 
-=======
->>>>>>> FETCH_HEAD
 
 
   int event=get_event();
-<<<<<<< HEAD
-=======
 
->>>>>>> FETCH_HEAD
 
 
   handleEvent(event);
   drawUI(current_state);
 
-<<<<<<< HEAD
+
   Serial.print("Boton :");
   Serial.println(event);
   
   State cstate=read_sensors(current_sensorsvalues);
 
-  drawState(cstate);
   
->>>>>>> FETCH_HEAD
-=======
 
-  Serial.print("boton ");
-  Serial.println(event);
->>>>>>> FETCH_HEAD
 
 
 
@@ -252,20 +223,11 @@ int button_center_pressed()
   if(current_state==HIGH){
     center_pressed_state++;
     return IDLE;
-<<<<<<< HEAD
 
   }
   else{
-    if(center_pressed_state<12 and center_pressed_state>0)//4 cicles per second and 3 secconds
 
-  }else{
-    if(center_pressed_state<3 and center_pressed_state>0)//4 cicles per second and 3 secconds
-
-=======
-  }
-  else{
     if(center_pressed_state<12 and center_pressed_state>0)//4 cicles per second and 3 secconds
->>>>>>> FETCH_HEAD
     {
       center_pressed_state=0;
       return BUTTONCENTER;
@@ -280,10 +242,8 @@ int button_center_pressed()
   return IDLE;
 
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> FETCH_HEAD
+
 void handleEvent(int event)
 {
   switch(current_mstate)
@@ -319,18 +279,21 @@ void handleEventSelection(int event)
             mylcd.clear();
             current_selectionstate=main_menu[current_menu].state;
             select_language=0;
+            actualizar_pantalla=true;
          }
          if(event==BUTTONDOWN)
          {
            mylcd.clear();
            current_menu++;
            current_menu= current_menu%MAXMENUITEMS;
+           actualizar_pantalla=true;
          }
          if(event==BUTTONUP)
          {
            mylcd.clear();
            current_menu=(current_menu==0)? MAXMENUITEMS-1: current_menu-1;
            current_menu= current_menu%MAXMENUITEMS;
+           actualizar_pantalla=true;
          }
          break;
        case IDIOMA:
@@ -339,6 +302,7 @@ void handleEventSelection(int event)
             mylcd.clear();
             active_language= select_language % MAX_LANGUAGE;
             current_selectionstate=MENU;
+            actualizar_pantalla=true;
          }
          if(event== BUTTONUP)
          {
@@ -357,17 +321,21 @@ void handleEventSelection(int event)
     }
 }
 void drawUI(State & state){
+  if(actualizar_pantalla){
   switch(current_mstate)
   {
   case SELECCION:
     drawSeleccion();
     break;
   case  ESTADO:
-    if(actualizar_pantalla)
+    
       drawState(state);
     break;
 
   }
+  actualizar_pantalla=false;
+  }
+  
 }
 
 
@@ -416,10 +384,7 @@ void drawMenu()
      Serial.println(i);
   }
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> FETCH_HEAD
 /**
  * draw the current state at LCD Screen
  * state: current state of sensors.
@@ -428,10 +393,6 @@ void drawState(State & state)
 {
   //Line1
   long mil1=  millis();
-<<<<<<< HEAD
-
-=======
->>>>>>> FETCH_HEAD
   mylcd.setPosition(1,0);
   if(tm.Hour<10) mylcd.print("0");
   mylcd.print(tm.Hour);
