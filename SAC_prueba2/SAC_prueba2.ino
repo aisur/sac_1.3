@@ -254,6 +254,7 @@ void handleEvent(int event)
       mylcd.clear();
       current_mstate=SELECCION;
      current_menu=0; 
+     actualizar_pantalla=true;
     }
     break; 
   case SELECCION:
