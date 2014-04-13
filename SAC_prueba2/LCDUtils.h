@@ -92,6 +92,6 @@ void LCD_Clear(SerLCD* lcd)
 void LCD_ClearLine(SerLCD* lcd,int lineNo)
 {
  String blanckLine="                    ";
- lcd->setPosition(0,lineNo%4);
+ lcd->setPosition((lineNo%4)+1,0);
  lcd->print(blanckLine); 
 }

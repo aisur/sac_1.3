@@ -55,7 +55,21 @@ enum Seleccion_States
    RESET_CONFIG,
    END_SELECTION
 };
-
+enum selectionDateStates
+{
+   DAY,
+  MONTH,
+ YEAR,
+SAVE,
+BACK
+};
+enum selectionTimeStates
+{
+  HOUR,
+  MINUTES,
+  SAVETIME,
+  BACKTIME 
+};
 typedef struct MenuItem
 {
    int label;
@@ -79,11 +93,15 @@ tmElements_t tm;
 cached_sensors current_sensorsvalues;
 State current_state;
 State previous_state;
+int editDay;
+int editMonth;
+int editYear;
 tmElements_t lastUpdate;
 boolean irrigating;
 int current_mstate;
 int current_selectionstate;
-
+int current_selectionDateState;
+int current_selectionTimeState;
 byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
@@ -136,7 +154,7 @@ void loop(){
 
   int event=get_event();
 
-
+  
 
   handleEvent(event);
   drawUI(current_state);
@@ -275,12 +293,18 @@ void handleEventSelection(int event)
     switch(current_selectionstate)
     {
        case MENU:
+
          if(event == BUTTONCENTER)
          {
             mylcd.clear();
             current_selectionstate=main_menu[current_menu].state;
             select_language=0;
+            current_selectionDateState=0;
             actualizar_pantalla=true;
+            
+            //editMonth=tm.Month;
+            //editYear=tmYearToCalendar(tm.Year);
+           
          }
          if(event==BUTTONDOWN)
          {
@@ -314,6 +338,30 @@ void handleEventSelection(int event)
            select_language++; 
          }
          break;
+         
+      case FECHA:
+      {
+         if(event==BUTTONUP)
+        {
+           current_selectionDateState--;
+           current_selectionDateState%=5;
+           actualizar_pantalla=true;
+        } 
+        if(event==BUTTONDOWN)
+        {
+           current_selectionDateState++;
+           current_selectionDateState%=5;
+           actualizar_pantalla=true;
+        }
+        if(current_selectionDateState==BACK && event==BUTTONCENTER)
+        {
+          current_selectionstate=MENU;
+          actualizar_pantalla=true;
+          current_menu=0;
+          mylcd.clear();
+        }
+      }
+      break;
       case END_SELECTION:
           current_mstate=ESTADO;
           current_selectionstate=MENU;
@@ -535,6 +583,7 @@ void drawTime()
       mylcd.print(":");
       if(tm.Minute<10) mylcd.print("0");
       mylcd.print(tm.Minute);
+     
 }
 void drawDate()
 {
@@ -550,4 +599,41 @@ void drawDate()
       mylcd.print(tm.Month);
       mylcd.print("/");
       mylcd.print(tmYearToCalendar(tm.Year));
+      mylcd.setPosition(3,0);
+      
+      if(current_selectionDateState==SAVE)
+      {
+        mylcd.print("*");
+      }
+      mylcd.print(translate(S_SAVE));
+      mylcd.print(" ");
+       mylcd.setPosition(4,0);
+      
+       if(current_selectionDateState==BACK)
+      {
+        mylcd.print("*");
+      }
+      mylcd.print(translate(S_RETURN_TO));
+      mylcd.print(" ");
+      switch(current_selectionDateState)
+      {
+         case DAY:
+             mylcd.setPosition(2,1);
+              mylcd.boxCursorOn();
+              break;
+         case MONTH:
+             mylcd.setPosition(2,4);
+              mylcd.boxCursorOn();
+              break;
+         case YEAR:
+             mylcd.setPosition(2,9);
+             mylcd.boxCursorOn();
+             break;
+          default:
+            mylcd.boxCursorOff();
+            break;
+             
+      }
+      
+      
 }
