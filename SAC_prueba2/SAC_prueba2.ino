@@ -436,9 +436,14 @@ void handleEventSelection(int event)
               current_config.calib_FCapacity=calib;
               store_Settings(current_config);
               current_selectionstate=END_SELECTION;
-              
+              mylcd.clear();
             }
-            break;
+       break;
+       case RESET_CONFIG:
+       
+          current_config=reset_Settings();
+          initializeGlobalVars();
+       
       case END_SELECTION:
           current_mstate=ESTADO;
           current_selectionstate=MENU;
