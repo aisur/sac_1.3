@@ -144,7 +144,18 @@ void setup()
   current_mstate=ESTADO;
   irrigating=false;
   current_selectionstate=MENU;
-
+  if(!load_Settings(current_config)){
+    current_config=reset_Settings();
+  }
+  initializeGlobalVars();
+}
+/*Initialize Global Variables. */
+void initializeGlobalVars(){
+   active_language =current_config.active_languaje;
+   current_sensorsvalues.cached_tempmax=(current_config.temps_max!=0)?current_config.temps_max:35;
+   current_sensorsvalues.cached_tempmin=(current_config.temps_min!=0)?current_config.temps_min:8;
+   current_sensorsvalues.cached_minmoisture=(current_config.moisture_min!=0)?current_config.moisture_min:30;
+   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
 }
 /**
  * setup SAC Pins.
@@ -163,7 +174,7 @@ void loop(){
   RTCread(tm);
 
   //ALWAYS UPDATE SCREEN WHEN STATE CHANGES
-  update_State(current_sensorsvalues,tm);
+  update_State(current_sensorsvalues,tm,current_config.calib_FCapacity);
   current_state=read_sensors(current_sensorsvalues);
   if(state_changed(current_state,previous_state) || time_between(lastUpdate,tm)>1){
     actualizar_pantalla=true; 
@@ -374,6 +385,8 @@ void handleEventSelection(int event)
             active_language= select_language % MAX_LANGUAGE;
             current_selectionstate=MENU;
             actualizar_pantalla=true;
+            current_config.active_languaje=active_language;
+            store_Settings(current_config);
          }
          if(event== BUTTONUP)
          {
@@ -416,6 +429,16 @@ void handleEventSelection(int event)
        else
         handleEventSelectionHour(event);
       break;
+      case CALIBRACION_SAT:
+          if(event=BUTTONCENTER)
+            {
+              int calib=readFCapacityValue();
+              current_config.calib_FCapacity=calib;
+              store_Settings(current_config);
+              current_selectionstate=END_SELECTION;
+              
+            }
+            break;
       case END_SELECTION:
           current_mstate=ESTADO;
           current_selectionstate=MENU;
@@ -550,6 +573,9 @@ void drawSeleccion()
       else
           drawEditingTime(cTime);
       break;
+   case CALIBRACION_SAT:
+      drawCalibrationSat();
+     break;
   }
  
 }
@@ -706,11 +732,13 @@ void update_relay_state (void)
             {
               if (!current_state.field_capacity)
               {
-                if(checkPumpCicle(irrigating,current_sensorsvalues.cached_lastWaterEvent,tm)){
+                //if(checkPumpCicle(irrigating,current_sensorsvalues.cached_lastWaterEvent,tm)){
                   relay_on(&rele); 
-                }else{
-                  relay_off(&rele); 
-                }
+               // }else{
+                 
+               // }
+              }else{
+                relay_off(&rele); 
               } 
             }
           }
@@ -856,4 +884,14 @@ void drawEditingTime(byte currentTimeState)
          break;
          
     }
+}
+void drawCalibrationSat()
+{
+   mylcd.setPosition(1,0);
+   printTitle(translate(S_CALIBRATE_MOIST));
+   mylcd.setPosition(2,0);
+   mylcd.print(translate(S_CURRENTVALUE));
+   mylcd.print(F(": "));
+   mylcd.print(readFCapacityValue());
+   actualizar_pantalla=true;
 }

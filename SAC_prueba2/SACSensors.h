@@ -17,9 +17,14 @@
  */
 #define WTS_PIN A2
 #define WFL_PIN 6
+#define FC_PIN A2
 volatile int NbTopsFan;
 int Calc;
 
+boolean readFieldCapacity(int fcapacity_calib){
+        int Fcapacity= analogRead(FC_PIN);
+         return        map(Fcapacity,0,fcapacity_calib,0,1);
+}
 
 void npm();
 /*
@@ -166,18 +171,18 @@ float getWaterFlowRate ()
   /*  Serial.print (Calc, DEC); //Prints the number calculated above*/
 }
 
-void update_State(cached_sensors & last_values,tmElements_t current_event)
+void update_State(cached_sensors & last_values,tmElements_t current_event,int FCapacityCalib)
 {
             
             float curr_moisture=read_moisture();
 	    float curr_temps= read_SoilTemp();
 	    float curr_flowrate=0.0;//getWaterFlowRate();
-
+  
             last_values.cached_moisture=curr_moisture;
 	    last_values.cached_temperature=curr_temps;
 	    last_values.cached_waterlevel = 0.0;//getWaterLevel(); // Boolean indicates if we have water or not.
 	    last_values.cached_flowvolume+=curr_flowrate/60000;//FlowRate(L/m) to FlowRate(m3/s).
-	    last_values.cached_fieldCapacity=true;
+	    last_values.cached_fieldCapacity=readFieldCapacity(FCapacityCalib);
 }
 
 State read_sensors(cached_sensors & last_values)
@@ -213,6 +218,10 @@ cached_sensors initSensorsCache(){
    current_sensors.cached_tempmax=0;
    current_sensors.cached_minmoisture=0;
    current_sensors.cached_maxmoisture=0;
+}
+int readFCapacityValue()
+{
+  return analogRead(FC_PIN);
 }
 boolean state_changed(State state1,State state2)
 {

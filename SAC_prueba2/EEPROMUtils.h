@@ -47,7 +47,7 @@ typedef struct{
   int check_interval; //Interval Check for update the Sensors
   int flow_diameter;//Flow Diameter for Flow Size Sensor
   int active_languaje;//Active Languaje
-
+  int calib_FCapacity;//Field capacity calibration.
 }Configuration;
 
 /*
@@ -59,15 +59,16 @@ Configuration getDefaultConfig(){
   default_config.rel1=0;
   default_config.rel1=1;
   default_config.rel1=2;
-  default_config.moisture_target=0.0;
-  default_config.moisture_min=0.0;
-  default_config.temps_max=0.0;
-  default_config.temps_min=0.0;
+  default_config.moisture_target=60;
+  default_config.moisture_min=35;
+  default_config.temps_max=35.0;
+  default_config.temps_min=8.0;
   default_config.pump_cicle_length=15;
   default_config.check_interval=15;
   default_config.moisture_calib=0.0;
   default_config.flow_diameter=16;
   default_config.active_languaje=0;
+  default_config.calib_FCapacity=0;
   return default_config;
 }
 /*
