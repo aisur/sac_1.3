@@ -135,7 +135,6 @@ byte current_mstate;
 byte current_selectionstate;
 byte current_selectionDateState;
 byte cTime=S_SELECTHOURS;
-byte cDate=DAY;
 byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
@@ -556,58 +555,6 @@ void handleEventEditingHour(int event)
 
 }
 
-
-void handleEventEditingDate(int event)
-{
-  switch(current_selectionDateState)
-  {
-  case DAY:
-    if(event==BUTTONDOWN){
-      editDays++;
-      editDays%=getDaysOfMonth(editMonths);
-      editDays=(getDaysOfMonth(editMonths)>31)?editDays=1:editDays;
-      actualizar_pantalla=true;
-    }
-    if(event==BUTTONUP){
-      editDays--;
-      editDays%=getDaysOfMonth(editMonths);
-      editDays=(getDaysOfMonth(editMonths)<1)?editDays=getDaysOfMonth(editMonths):editDays;
-      actualizar_pantalla=true;
-    }
-  case MONTH:
-    if(event==BUTTONDOWN){
-      editMonths++;
-      editMonths=(editMonths%12)+1;
-      editMonths=(editMonths>12)?editMonths=1:editMonths;
-      actualizar_pantalla=true;
-    }
-    if(event==BUTTONUP){
-      editMonths--;
-      editMonths=(editMonths%12)+1;
-      editMonths=(editMonths<1)?editMonths=12:editMonths;
-      actualizar_pantalla=true;
-    }
-    case YEAR:
-    if(event==BUTTONDOWN){
-      editYears++;
-      editYears=(editYears>2100)?editYears=2000:editYears;  
-      actualizar_pantalla=true;
-    }
-    if(event==BUTTONUP){
-      editYears--;
-      editYears=(editYears<2000)?editYears=2100:editYears;
-      actualizar_pantalla=true;
-    }
-  default:
-    if(event==BUTTONCENTER){
-      isEditing=false;
-      actualizar_pantalla=true;
-      mylcd.clear();
-    }
-    break; 
-  }
-
-}
 /*
  * DRAWS  INTERFACE IN STATUS MODE & SELECTION MODE
  */
@@ -1002,45 +949,17 @@ void drawEditingDate(byte currentDateState)
       mylcd.boxCursorOn();
       break;
     case YEAR:
-       mylcd.setPosition(1,0);
+      mylcd.setPosition(1,0);
       printTitle(translate(S_EDITYEAR));
-    mylcd.setPosition(2,0);
-    if(editYears<10)
+      mylcd.setPosition(2,0);
+    if(editYear<10)
       mylcd.print(F("0"));
-    mylcd.print(editYears);
-    mylcd.boxCursorOff();
-    mylcd.setPosition(2,1);
-    mylcd.boxCursorOn();
-    break;
+      mylcd.print(editYears);
+      mylcd.boxCursorOff();
+      mylcd.setPosition(2,1);
+      mylcd.boxCursorOn();
+      break;
   }
-byte getDaysOfMonth(byte month)
-{
-  byte nDays;
-  switch(month)
-  {
-    case 1:
-    case 3:
-    case 5:
-    case 7: 
-    case 8:
-    case 10:
-    case 12:
-    nDays = 31;
-    break;
-    case 2:
-    nDays=28;
-    break;
-    case 4:
-    case 6:
-    case 9:
-    case 11:
-    nDays=30;
-    break;
-    default:
-    nDays =-1;
-    break;
-  }
-  return nDays;
-}
+      
 }
 
