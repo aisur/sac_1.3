@@ -42,9 +42,9 @@ typedef struct _Relay Relay;
 
   
   struct _Relay {
-  int gpio_pin;
-  int role;
-  int state;
+  byte gpio_pin;
+  byte role;
+  byte state;
  };
  
 

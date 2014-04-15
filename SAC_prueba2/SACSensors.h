@@ -23,7 +23,12 @@ int Calc;
 
 boolean readFieldCapacity(int fcapacity_calib){
         int Fcapacity= analogRead(FC_PIN);
-         return        map(Fcapacity,0,fcapacity_calib,0,1);
+         
+         digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
+  
+  int cached_fc = analogRead(FC_PIN);
+  digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
+  return        map(cached_fc,0,fcapacity_calib,0,1);
 }
 
 void npm();
@@ -221,7 +226,11 @@ cached_sensors initSensorsCache(){
 }
 int readFCapacityValue()
 {
-  return analogRead(FC_PIN);
+  digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
+  
+  int cached_fc = analogRead(FC_PIN);
+  digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
+  return cached_fc;
 }
 boolean state_changed(State state1,State state2)
 {

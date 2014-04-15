@@ -33,8 +33,8 @@
 #define BUTTONCENTERLONG 3
 #define IDLE -1
 
-#define TIEMPOACTUALIZAR 1*60*1000
-#
+#define VERSION "1.3"
+
 
 void drawState(State & state);
 
@@ -131,6 +131,20 @@ cached_sensors current_sensorsvalues;
 State current_state;
 State previous_state;
 /*
+ * RELAY CONFIG
+ *EACH RELAY USES A ROLE TO CONTROL IT'S FUNCTIONS
+ */
+
+Relay *find_relay (int role);
+Relay relay[MAX_RELAYS]={
+  {
+    RELAY1_PIN,S_IRRIGATION,RELAY_OFF }
+  ,{
+    RELAY2_PIN,S_DISCONNECTED,RELAY_OFF      }
+  ,{
+    RELAY3_PIN,S_DISCONNECTED,RELAY_OFF }
+};
+/*
  * GLOBAL VARIABLES
  */
 tmElements_t lastUpdate;
@@ -161,11 +175,14 @@ void setup()
   actualizar_pantalla=true;
   // setupFlowRate();
 
-  current_mstate=ESTADO;
+  
   irrigating=false;
   current_selectionstate=MENU;
   if(!load_Settings(current_config)){
     current_config=reset_Settings();
+    current_mstate=SELECCION;
+  }else{
+   current_mstate=ESTADO; 
   }
   initializeGlobalVars();
 }
@@ -306,7 +323,7 @@ int button_center_pressed()
   }
   else{
 
-    if(center_pressed_state<12 and center_pressed_state>0)//4 cicles per second and 3 secconds
+    if(center_pressed_state<9 and center_pressed_state>0)//4 cicles per second and 3 secconds
     {
       center_pressed_state=0;
       return BUTTONCENTER;
@@ -332,7 +349,7 @@ void handleEvent(int event)
   switch(current_mstate)
   {
   case ESTADO:
-    if(event==BUTTONCENTER){
+    if(event==BUTTONCENTERLONG){
       //Clear LCD Screen
       mylcd.clear();
       current_mstate=SELECCION;
@@ -414,12 +431,14 @@ void handleEventSelection(int event)
     }
     if(event== BUTTONUP)
     {
-      select_language--; 
+      select_language--;
+      select_language =(select_language<0)? 1:0;
       actualizar_pantalla=true;            
     }
     if(event==BUTTONDOWN)
     {
       select_language++; 
+      select_language%=2;
       actualizar_pantalla=true;
     }
     break;
@@ -438,12 +457,13 @@ void handleEventSelection(int event)
       handleEventSelectionHour(event);
     break;
   case CALIBRACION_SAT:
-    if(event=BUTTONCENTER)
+    if(event==BUTTONCENTER)
     {
       int calib=readFCapacityValue();
       current_config.calib_FCapacity=calib;
       store_Settings(current_config);
-      current_selectionstate=END_SELECTION;
+      current_selectionstate=MENU;
+      actualizar_pantalla=true;
       mylcd.clear();
     }
     break;
@@ -451,6 +471,10 @@ void handleEventSelection(int event)
 
     current_config=reset_Settings();
     initializeGlobalVars();
+    current_mstate=SELECCION;
+    current_selectionstate=MENU;
+    actualizar_pantalla=true;
+    break;
   case ABOUT:
     if(event==BUTTONCENTER)
     {
@@ -736,6 +760,7 @@ void drawSelectLanguage()
   if(select_language==0)
     mylcd.print("*");
   mylcd.print(translate(S_ENGLISH));
+  mylcd.print(F(" "));
   mylcd.setPosition(3,0);
   if(select_language==1)
     mylcd.print("*");
@@ -792,18 +817,18 @@ void drawState(State & state)
   if(state.moisture_MAX<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MAX);
-  mylcd.print("%");
+  mylcd.print(" ");
   mylcd.print(translate(MIN));
   if(state.moisture_MIN<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
-  mylcd.print("%");
+  mylcd.print(" ");
   mylcd.print("[");
   if(state.moisture_target<10)
     mylcd.print("0");
   mylcd.print((int)state.current_moisture);
-  mylcd.print("%");
-  mylcd.print("]");
+  mylcd.print("");
+  mylcd.print("]%");
   if(state.moisture_target<=99)
     mylcd.print(" ");
 
@@ -844,20 +869,7 @@ void drawState(State & state)
   //LCD_Message(&mylcd,line1,line2,line3,"bb");
 }
 
-/*
- * RELAY CONFIG
- *EACH RELAY USES A ROLE TO CONTROL IT'S FUNCTIONS
- */
 
-Relay *find_relay (int role);
-Relay relay[MAX_RELAYS]={
-  {
-    RELAY1_PIN,S_IRRIGATION,RELAY_OFF }
-  ,{
-    RELAY2_PIN,S_DISCONNECTED,RELAY_OFF      }
-  ,{
-    RELAY3_PIN,S_DISCONNECTED,RELAY_OFF }
-};
 /*
  * ALWAYS LISTENS TO RELAYS STATES IN EACH ROLE
  */
@@ -866,12 +878,11 @@ void update_relay_state (void)
   int i;
   for (i=0; i < MAX_RELAYS; i++){
 
-    if (relay[i].role != S_DISCONNECTED)
-    {
+   
       Relay rele = relay[i];
       switch (rele.role){
       case S_IRRIGATION:
-        {
+        
           if (current_state.current_moisture <= current_state.moisture_MIN )
           {
             if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
@@ -885,9 +896,9 @@ void update_relay_state (void)
               } 
             }
           }
-        }
+        break;
       }
-    }
+    
   }
 }
 /*
@@ -1037,6 +1048,7 @@ void drawCalibrationSat()
   mylcd.print(F(": "));
   mylcd.print(readFCapacityValue());
   actualizar_pantalla=true;
+
 }
 byte getDaysofMonth(byte month) {  
 
@@ -1104,6 +1116,7 @@ void drawAbout()
   mylcd.setPosition(3,0);
   mylcd.print(F("http://sacultivo.com"));
   mylcd.setPosition(4,0);
-  mylcd.print(F("VERSION 1.3"));
+  mylcd.print(F("VERSION "));
+  mylcd.print(VERSION);
 }  
 

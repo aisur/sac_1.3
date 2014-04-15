@@ -120,7 +120,7 @@ TranslatedString string_db[]={
   {{"EDIT MONTH","EDITAR MES"}},
   {{"EDIT YEAR","EDITAR ANO"}},
   {{"ABOUT","ACERCA DE"}},
-  {{"SAC CULTIVAR","SAC CULTIVO"}}
+  {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}}
 };
 
 
