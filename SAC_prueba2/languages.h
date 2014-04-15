@@ -65,7 +65,8 @@ enum {
   S_EDITDAY,
   S_EDITHOUR,
   S_EDITMINUTES,
-  S_CURRENTVALUE
+  S_CURRENTVALUE,
+  S_EDITMONTH
 };
 
 #define MAX_LANGUAGE 2
@@ -130,7 +131,8 @@ TranslatedString string_db[]={
   {{"EDIT DAY","EDITAR DIA"}},
   {{"EDIT HOUR","EDITAR HORA"}},
   {{"EDIT MINUTES","EDITAR MINUTOS"}},
-  {{"CURRENT VALUE","VALOR ACTUAL"}}
+  {{"CURRENT VALUE","VALOR ACTUAL"}},
+  {{"EDIT MONTH","EDITAR MES"}},
 };
 
 

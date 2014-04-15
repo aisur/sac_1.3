@@ -34,6 +34,7 @@
 #define IDLE -1
 
 #define TIEMPOACTUALIZAR 1*60*1000
+#
 
 void drawState(State & state);
 
@@ -94,19 +95,19 @@ typedef struct MenuItem
 
 MenuItem main_menu[]={
   {
-    S_LANGUAGE,IDIOMA  }
+    S_LANGUAGE,IDIOMA    }
   ,{
-    S_DATE,FECHA  }
+    S_DATE,FECHA    }
   ,
   {
-    S_HOUR,HORA  }
+    S_HOUR,HORA    }
   ,{
-    S_SATCALIBRATION,CALIBRACION_SAT  }
+    S_SATCALIBRATION,CALIBRACION_SAT    }
   ,
   {
-    S_RESET,RESET_CONFIG  }
+    S_RESET,RESET_CONFIG    }
   ,{
-    S_RETURN_TO,END_SELECTION  }
+    S_RETURN_TO,END_SELECTION    }
 };
 
 int current_menu;
@@ -141,6 +142,9 @@ byte button_center_state=LOW;
 byte center_pressed_state=0;
 byte editHours;
 byte editMinutes;
+byte editDays;
+byte editMonths;
+int editYears;
 boolean isEditing;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
@@ -371,6 +375,9 @@ void handleEventSelection(int event)
       actualizar_pantalla=true;
       editHours=tm.Hour;
       editMinutes=tm.Minute;
+      editDays=tm.Day;
+      editMonths=tm.Month;
+      editYears=tmYearToCalendar(tm.Year);
       isEditing=false;
       // current_selectTimeState=SELECTHOURS;
 
@@ -414,27 +421,11 @@ void handleEventSelection(int event)
     break;
 
   case FECHA:
-    {
-      if(event==BUTTONUP)
-      {
-        current_selectionDateState--;
-        current_selectionDateState%=5;
-        actualizar_pantalla=true;
-      } 
-      if(event==BUTTONDOWN)
-      {
-        current_selectionDateState++;
-        current_selectionDateState%=5;
-        actualizar_pantalla=true;
-      }
-      if(current_selectionDateState==BACK && event==BUTTONCENTER)
-      {
-        current_selectionstate=MENU;
-        actualizar_pantalla=true;
-        current_menu=0;
-        mylcd.clear();
-      }
-    }
+   if(isEditing)
+     handleEventEditingDate(event);
+   else
+    handleEventSelectionDate(event);
+     
     break;
   case HORA:
     if(isEditing) 
@@ -463,6 +454,55 @@ void handleEventSelection(int event)
     actualizar_pantalla=true;
     break;
   }
+}
+void handleEventSelectionDate(int event)
+{
+  switch(current_selectionDateState)
+  {
+    
+    
+    default:
+    
+    if(event==BUTTONUP)
+      {
+        current_selectionDateState--;
+        current_selectionDateState%=5;
+        actualizar_pantalla=true;
+      } 
+      if(event==BUTTONDOWN)
+      {
+        current_selectionDateState++;
+        current_selectionDateState%=5;
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONCENTER)
+      {
+         isEditing=true;
+         actualizar_pantalla=true;
+         mylcd.clear(); 
+      }
+      if(current_selectionDateState==SAVE && event==BUTTONCENTER)
+      {
+        current_selectionstate=MENU;
+        actualizar_pantalla=true;
+        current_menu=0;
+        mylcd.clear();
+        tm.Day=editDays;
+        tm.Month=editMonths;
+        tm.Year=CalendarYrToTm(editYears);
+        setHour(tm);
+      }
+      if(current_selectionDateState==BACK && event==BUTTONCENTER)
+      {
+        current_selectionstate=MENU;
+        actualizar_pantalla=true;
+        current_menu=0;
+        mylcd.clear();
+      }
+      break;
+  }
+   
+    
 }
 void handleEventSelectionHour(int event)
 {
@@ -514,6 +554,71 @@ void handleEventSelectionHour(int event)
     }
     break;
   } 
+}
+void handleEventEditingDate(int event)
+{
+  switch(current_selectionDateState)
+  {
+  case DAY:
+    if(event==BUTTONDOWN){
+      editDays++;
+      editDays%=getDaysofMonth(editMonths);
+      editDays=(getDaysofMonth(editMonths)>31)?editDays=1:editDays;
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONUP){
+      editDays--;
+      editDays%=getDaysofMonth(editMonths);
+      editDays=(getDaysofMonth(editMonths)<1)?editDays=getDaysofMonth(editMonths):editDays;
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONCENTER){
+      isEditing=false;
+      actualizar_pantalla=true;
+      mylcd.clear();
+    }
+    break;
+  case MONTH:
+    if(event==BUTTONDOWN){
+      editMonths++;
+      editMonths=(editMonths%12)+1;
+      editMonths=(editMonths>12)?editMonths=1:editMonths;
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONUP){
+      editMonths--;
+      editMonths=(editMonths%12)+1;
+      editMonths=(editMonths<1)?editMonths=12:editMonths;
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONCENTER){
+      isEditing=false;
+      actualizar_pantalla=true;
+      mylcd.clear();
+    }
+    break;
+    case YEAR:
+    if(event==BUTTONDOWN){
+      editYears++;
+      editYears=(editYears>2032)?editYears=2000:editYears;  
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONUP){
+      editYears--;
+      editYears=(editYears<2000)?editYears=2032:editYears;
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONCENTER){
+      isEditing=false;
+      actualizar_pantalla=true;
+      mylcd.clear();
+    }
+    break;
+  default:
+   
+    break; 
+  }
+
 }
 void handleEventEditingHour(int event)
 {
@@ -588,7 +693,10 @@ void drawSeleccion()
     drawSelectLanguage();
     break;
   case FECHA:
+   if(!isEditing)
     drawDate();
+    else
+     drawEditingDate(current_selectionDateState);
     break;
   case HORA:
     if(!isEditing)
@@ -729,11 +837,11 @@ void drawState(State & state)
 Relay *find_relay (int role);
 Relay relay[MAX_RELAYS]={
   {
-    RELAY1_PIN    }
+    RELAY1_PIN      }
   ,{
-    RELAY2_PIN    }
+    RELAY2_PIN      }
   ,{
-    RELAY3_PIN    }
+    RELAY3_PIN      }
 };
 /*
  * ALWAYS LISTENS TO RELAYS STATES IN EACH ROLE
@@ -835,12 +943,12 @@ void drawDate()
   printTitle(translate(S_DATE));
   mylcd.setPosition(2,0);
   if(tm.Day<10) mylcd.print("0");
-  mylcd.print(tm.Day);
+  mylcd.print(editDays);
   mylcd.print("/");
   if(tm.Month<10) mylcd.print("0");
-  mylcd.print(tm.Month);
+  mylcd.print(editMonths);
   mylcd.print("/");
-  mylcd.print(tmYearToCalendar(tm.Year));
+  mylcd.print(editYears);
   mylcd.setPosition(3,0);
 
   if(current_selectionDateState==SAVE)
@@ -918,5 +1026,61 @@ void drawCalibrationSat()
   mylcd.print(F(": "));
   mylcd.print(readFCapacityValue());
   actualizar_pantalla=true;
+}
+byte getDaysofMonth(byte month) {  
+
+  switch(month){ 
+  case 1:
+  case 3:
+  case 5:
+  case 7:
+  case 8:
+  case 10:
+  case 12:
+    return 31;
+    break;
+  case 2:
+    return 2;
+  case 4:
+  case 6:
+  case 9:
+  case 11:
+    return 30;
+  default:
+    return -1;
+  }
+}
+void drawEditingDate(byte currentDateState)
+{
+   byte title;
+   int data;
+   switch(currentDateState)
+   {
+     
+      case DAY:
+         title=S_EDITDAY;
+         data=editDays;
+       break; 
+      case MONTH:
+         title=S_EDITMONTH;
+         data=editMonths;
+        break;
+      case YEAR:
+         title=S_EDITDAY;
+         data=editYears;
+         break;
+   }
+   mylcd.boxCursorOff();
+   mylcd.setPosition(1,0);
+   printTitle(translate(title));
+   mylcd.setPosition(2,0);
+   if(data<10)
+     mylcd.print(F("0"));
+   mylcd.print(data);
+   if(data>1000)
+   mylcd.setPosition(2,3);
+   else
+      mylcd.setPosition(2,1);
+   mylcd.boxCursorOn();
 }
 
