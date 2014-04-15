@@ -12,18 +12,12 @@ int active_language=1;
 
 
 enum {
-  S_EMPTY=0,
-  S_WA,
+  S_WA=0,
   S_V,
   S_S,
-  S_H,
-  S_L,
-  S_A,
   S_PU,
   S_LANGUAGE,
   S_ENGLISH,
-  S_ENABLED,
-  S_DISABLED,
   S_TIME,
   S_SOIL_MOISTURE,
   S_CALIBRATE_MOIST,
@@ -35,9 +29,6 @@ enum {
   S_VENTILATION,
   S_HUMIDIFIER,
   S_ALARM,
-  S_RELAY1,
-  S_RELAY2,
-  S_RELAY3,
   S_AIR_HUMIDITY,
   S_AIR_TEMPERATURE,
   S_IRRIGATION_CYCLE,
@@ -66,7 +57,10 @@ enum {
   S_EDITHOUR,
   S_EDITMINUTES,
   S_CURRENTVALUE,
-  S_EDITMONTH
+  S_EDITMONTH,
+  S_EDITYEAR,
+  S_ABOUT,
+  S_SAC
 };
 
 #define MAX_LANGUAGE 2
@@ -76,18 +70,12 @@ typedef struct TranslatedString {
 
 TranslatedString string_db[]={
   /* for languages missing translations, english will be used instead */
-  {{"",""}},
   {{"  F.C.","C.C."}},
   {{"E ","E "}},
   {{"SOIL","HSO:"}},
-  {{"H ","H "}},
-  {{"L ","L "}},
-  {{"A ","A "}},
   {{"PU ","RIEGO"}},
   {{"LANGUAGE","IDIOMA"}},
   {{"ENGLISH",         "INGLES"}},
-  {{"<enabled>",       "<activar>"}},
-  {{"<disabled>",      "<inhabilitado>"}},
   {{"TIME",            "HORA"}},
   {{"SOIL MOISTURE",   "HUMEDAD SUELO"}},
   {{"CALIBRATE SAT.","CALIBRACION SAT."}},
@@ -99,9 +87,6 @@ TranslatedString string_db[]={
   {{"AIR EXTRACTION",  "EXTRAC.HUMEDAD"}},
   {{"HUMIDIFIER",      "HUMIDIFICACION"}},
   {{"alarm",           "Alarm"}},
-  {{"OUTPUT 1",        "SALIDA 1"}},
-  {{"OUTPUT 2",        "SALIDA 2"}},
-  {{"OUTPUT 3",        "SALIDA 3"}},
   {{"AIR HUMIDITY",    "HUMEDAD AIRE"}},
   {{"TEMPERATURE",     "TEMPERATURA"}},
 
@@ -133,6 +118,9 @@ TranslatedString string_db[]={
   {{"EDIT MINUTES","EDITAR MINUTOS"}},
   {{"CURRENT VALUE","VALOR ACTUAL"}},
   {{"EDIT MONTH","EDITAR MES"}},
+  {{"EDIT YEAR","EDITAR ANO"}},
+  {{"ABOUT","ACERCA DE"}},
+  {{"SAC CULTIVAR","SAC CULTIVO"}}
 };
 
 

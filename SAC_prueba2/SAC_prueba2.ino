@@ -19,7 +19,7 @@
 #define LCD_PIN 11
 #define NUM_COLS 20
 #define NUM_ROWS 4
-#define MAXMENUITEMS 6
+#define MAXMENUITEMS 7
 /*
  * BUTTONS PINS
  */
@@ -61,6 +61,7 @@ enum Seleccion_States
   HORA,
   CALIBRACION_SAT,
   RESET_CONFIG,
+  ABOUT,
   END_SELECTION
 };
 /*
@@ -108,6 +109,7 @@ MenuItem main_menu[]={
     S_RESET,RESET_CONFIG    }
   ,{
     S_RETURN_TO,END_SELECTION    }
+    ,{S_ABOUT,ABOUT}
 };
 
 int current_menu;
@@ -447,7 +449,15 @@ void handleEventSelection(int event)
 
     current_config=reset_Settings();
     initializeGlobalVars();
+  case ABOUT:
+    if(event==BUTTONCENTER)
+    {
 
+        current_selectionstate=MENU;
+        actualizar_pantalla=true;
+        mylcd.clear();
+    }
+    break;
   case END_SELECTION:
     current_mstate=ESTADO;
     current_selectionstate=MENU;
@@ -706,6 +716,9 @@ void drawSeleccion()
     break;
   case CALIBRACION_SAT:
     drawCalibrationSat();
+    break;
+    case ABOUT:
+    drawAbout();
     break;
   }
 
@@ -1083,4 +1096,16 @@ void drawEditingDate(byte currentDateState)
       mylcd.setPosition(2,1);
    mylcd.boxCursorOn();
 }
+
+void drawAbout()
+{
+  mylcd.setPosition(1,0);
+  printTitle(translate(S_ABOUT));
+  mylcd.setPosition(2,0);
+  mylcd.print(translate(S_SAC));
+  mylcd.setPosition(3,0);
+  mylcd.print(F("aaa"));
+  mylcd.setPosition(4,0);
+  mylcd.print(F("VERSION 1.3"));
+}  
 
