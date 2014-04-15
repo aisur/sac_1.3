@@ -107,9 +107,10 @@ MenuItem main_menu[]={
   ,
   {
     S_RESET,RESET_CONFIG    }
+  ,{S_ABOUT,ABOUT}
   ,{
     S_RETURN_TO,END_SELECTION    }
-    ,{S_ABOUT,ABOUT}
+    
 };
 
 int current_menu;
@@ -212,6 +213,7 @@ void loop(){
 
   handleEvent(event);
   State cstate=read_sensors(current_sensorsvalues);
+  update_relay_state();
   drawUI(current_state);
 
 
@@ -850,11 +852,11 @@ void drawState(State & state)
 Relay *find_relay (int role);
 Relay relay[MAX_RELAYS]={
   {
-    RELAY1_PIN      }
+    RELAY1_PIN,S_IRRIGATION,RELAY_OFF }
   ,{
-    RELAY2_PIN      }
+    RELAY2_PIN,S_DISCONNECTED,RELAY_OFF      }
   ,{
-    RELAY3_PIN      }
+    RELAY3_PIN,S_DISCONNECTED,RELAY_OFF }
 };
 /*
  * ALWAYS LISTENS TO RELAYS STATES IN EACH ROLE
@@ -870,19 +872,15 @@ void update_relay_state (void)
       switch (rele.role){
       case S_IRRIGATION:
         {
-          if (current_state.current_moisture > current_state.moisture_MIN && current_state.current_moisture < current_state.moisture_target)
+          if (current_state.current_moisture <= current_state.moisture_MIN )
           {
             if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
             {
-              if (!current_state.field_capacity)
-              {
-                //if(checkPumpCicle(irrigating,current_sensorsvalues.cached_lastWaterEvent,tm)){
-                relay_on(&rele); 
-                // }else{
 
-                // }
-              }
-              else{
+                 if( current_state.current_moisture < current_state.moisture_target){
+                    relay_on(&rele); 
+           
+              }else{
                 relay_off(&rele); 
               } 
             }
@@ -1104,7 +1102,7 @@ void drawAbout()
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_SAC));
   mylcd.setPosition(3,0);
-  mylcd.print(F("aaa"));
+  mylcd.print(F("http://sacultivo.com"));
   mylcd.setPosition(4,0);
   mylcd.print(F("VERSION 1.3"));
 }  
