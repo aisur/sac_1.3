@@ -142,9 +142,6 @@ byte center_pressed_state=0;
 byte editHours;
 byte editMinutes;
 boolean isEditing;
-byte editDays;
-byte editMonths;
-byte editYears;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -921,45 +918,5 @@ void drawCalibrationSat()
   mylcd.print(F(": "));
   mylcd.print(readFCapacityValue());
   actualizar_pantalla=true;
-}
-void drawEditingDate(byte currentDateState)
-{
-  switch (currentDateState)
-  {
-    case DAY:
-      mylcd.setPosition(1,0);
-      printTitle(translate(S_EDITDAY));
-      mylcd.setPosition(2,0);
-      if(editDays<10)
-         mylcd.print(F("0"));
-      mylcd.print(editDays);
-      mylcd.boxCursorOff();
-      mylcd.setPosition(2,1);
-      mylcd.boxCursorOn();
-      break;
-    case MONTH:
-      mylcd.setPosition(1,0);
-      printTitle(translate(S_EDITMONTH));
-      mylcd.setPosition(2,0);
-    if(editMonths<10)
-      mylcd.print(F("0"));
-      mylcd.print(editMonths);
-      mylcd.boxCursorOff();
-      mylcd.setPosition(2,1);
-      mylcd.boxCursorOn();
-      break;
-    case YEAR:
-      mylcd.setPosition(1,0);
-      printTitle(translate(S_EDITYEAR));
-      mylcd.setPosition(2,0);
-    if(editYear<10)
-      mylcd.print(F("0"));
-      mylcd.print(editYears);
-      mylcd.boxCursorOff();
-      mylcd.setPosition(2,1);
-      mylcd.boxCursorOn();
-      break;
-  }
-      
 }
 
