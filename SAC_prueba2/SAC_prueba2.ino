@@ -20,6 +20,7 @@
 #define NUM_COLS 20
 #define NUM_ROWS 4
 #define MAXMENUITEMS 7
+#define magia(lcd,x) {  lcd.setPosition(1,0); lcd.print(x);delay(10000);}
 /*
  * BUTTONS PINS
  */
@@ -90,11 +91,11 @@ enum s_selectionTimeStates
  */
 typedef struct MenuItem
 {
-  int label;
-  int state; 
+   int label;
+   int  state; 
 };
 
-MenuItem main_menu[]={
+ MenuItem main_menu[] ={
   {
     S_LANGUAGE,IDIOMA    }
   ,{
@@ -135,14 +136,14 @@ State previous_state;
  *EACH RELAY USES A ROLE TO CONTROL IT'S FUNCTIONS
  */
 
-Relay *find_relay (int role);
+
 Relay relay[MAX_RELAYS]={
   {
-    RELAY1_PIN,S_IRRIGATION,RELAY_OFF }
+    RELAY1_PIN,R_IRRIGATION,RELAY_OFF }
   ,{
-    RELAY2_PIN,S_DISCONNECTED,RELAY_OFF      }
+    RELAY2_PIN,R_DISCONNECTED,RELAY_OFF      }
   ,{
-    RELAY3_PIN,S_DISCONNECTED,RELAY_OFF }
+    RELAY3_PIN,R_DISCONNECTED,RELAY_OFF }
 };
 /*
  * GLOBAL VARIABLES
@@ -203,6 +204,12 @@ void setup_pins(){
   pinMode(BUTTON_CENTER_PIN,INPUT);
 
   pinMode(SOIL_MOISTURE_POWER_PIN, OUTPUT);
+  for(int i=0;i<MAX_RELAYS;i++)
+  {
+    pinMode(relay[i].gpio_pin,OUTPUT);
+   
+  }
+  
   isEditing=false;
 }
 void loop(){
@@ -229,7 +236,6 @@ void loop(){
 
 
   handleEvent(event);
-  State cstate=read_sensors(current_sensorsvalues);
   update_relay_state();
   drawUI(current_state);
 
@@ -824,7 +830,7 @@ void drawState(State & state)
   mylcd.print((int)state.moisture_MIN);
   mylcd.print(" ");
   mylcd.print("[");
-  if(state.moisture_target<10)
+  if(state.current_moisture<10)
     mylcd.print("0");
   mylcd.print((int)state.current_moisture);
   mylcd.print("");
@@ -881,16 +887,18 @@ void update_relay_state (void)
    
       Relay rele = relay[i];
       switch (rele.role){
-      case S_IRRIGATION:
-        
+      case R_IRRIGATION:
+         
           if (current_state.current_moisture <= current_state.moisture_MIN )
           {
+            
             if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
             {
-
+               
                  if( current_state.current_moisture < current_state.moisture_target){
-                    relay_on(&rele); 
-           
+                   
+                    relay_on(rele); 
+                    
               }else{
                 relay_off(&rele); 
               } 
@@ -1107,7 +1115,7 @@ void drawEditingDate(byte currentDateState)
    mylcd.boxCursorOn();
 }
 
-void drawAbout()
+void static drawAbout()
 {
   mylcd.setPosition(1,0);
   printTitle(translate(S_ABOUT));

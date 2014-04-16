@@ -202,7 +202,7 @@ State read_sensors(cached_sensors & last_values)
         current_state.current_moisture=last_values.cached_moisture;
 	current_state.consumption=last_values.cached_flowvolume;
 	current_state.current_temps=last_values.cached_temperature;
-	current_state.moisture_target=last_values.cached_moisture;
+	current_state.moisture_target=last_values.cached_maxmoisture;
 	current_state.temps_max=last_values.cached_tempmax;
 	current_state.temps_min=last_values.cached_tempmin;
         current_state.current_temps=last_values.cached_temperature;
