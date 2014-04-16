@@ -86,6 +86,16 @@ enum s_selectionTimeStates
   S_SAVETIME,
   S_BACKTIME 
 };
+enum s_selectStatus
+{
+  S_HSO=0,
+  S_HSMIN,
+  S_PCICLE,
+  S_PINTERVAL,
+  S_TSMAX,
+  S_TSMIN,
+  
+};
 /*
  * MENU STRUCTURE 
  */
@@ -94,7 +104,6 @@ typedef struct MenuItem
    int label;
    int  state; 
 };
-
  MenuItem main_menu[] ={
   {
     S_LANGUAGE,IDIOMA    }
@@ -158,6 +167,7 @@ byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
 byte center_pressed_state=0;
+byte selectionStatus=0;
 byte editHours;
 byte editMinutes;
 byte editDays;
@@ -362,13 +372,65 @@ void handleEvent(int event)
       current_menu=0; 
       actualizar_pantalla=true;
     }
+    if(event==BUTTONCENTER)
+    {
+     mylcd.clear();
+     current_mstate=EDICION;
+     actualizar_pantalla=true;
+     selectionStatus=S_HSO;
+ 
+    }
     break; 
   case SELECCION:
 
     handleEventSelection(event);
 
     break;
+    case EDICION:
+    handleEventSelectStatus(event);
+    break;
   }
+}
+void handleEventSelectStatus(int event)
+{
+  switch(selectionStatus)
+  {
+    case S_HSO:
+       
+     
+    default:
+   
+    break;
+  }
+   if(!isEditing){
+     if(event==BUTTONDOWN)
+      {
+       selectionStatus++;
+       selectionStatus%=6;
+       actualizar_pantalla=true;
+      } 
+      if(event==BUTTONUP)
+      {
+       selectionStatus--;
+       selectionStatus=(selectionStatus<0)?5:selectionStatus;
+       actualizar_pantalla=true;
+      }
+     
+      if(event==BUTTONCENTERLONG)
+      {
+         
+        selectionStatus=S_HSO;
+        current_mstate=ESTADO;
+        actualizar_pantalla=true;
+        mylcd.clear();
+      }
+      if(event==BUTTONCENTER)
+      {
+        
+         isEditing=true;
+         actualizar_pantalla=true; 
+      }
+     }
 }
 /*
  * PRINTS MENU TITLE
@@ -713,7 +775,8 @@ void drawUI(State & state){
 
       drawState(state);
       break;
-
+    case EDICION:
+      drawSelectStatus(state);
     }
     actualizar_pantalla=false;
   }
@@ -801,7 +864,6 @@ void drawMenu()
 void drawState(State & state)
 {
   //Line1
-  long mil1=  millis();
   mylcd.setPosition(1,0);
   if(tm.Hour<10) mylcd.print("0");
   mylcd.print(tm.Hour);
@@ -869,8 +931,7 @@ void drawState(State & state)
   mylcd.print(currenttemp);
   mylcd.print("C");
   //Serial.println(line1);
-  long mil2=millis();
-  long total=mil2-mil1;
+  
   //Serial.println(total);
   //LCD_Message(&mylcd,line1,line2,line3,"bb");
 }
@@ -1127,4 +1188,101 @@ void static drawAbout()
   mylcd.print(F("VERSION "));
   mylcd.print(VERSION);
 }  
+void static drawSelectStatus(State & state)
+{
+  mylcd.setPosition(1,0);
+  printTitle("PRUEBA SSTADO");
+  //Line2
+  mylcd.setPosition(2,0);
+  mylcd.print(translate(S_S));
+  if(state.moisture_MAX<10)
+    mylcd.print("0");
+  mylcd.print((int)state.moisture_MAX);
+  mylcd.print(" ");
+  mylcd.print(translate(MIN));
+  if(state.moisture_MIN<10)
+    mylcd.print("0");
+  mylcd.print((int)state.moisture_MIN);
+  mylcd.print(" ");
+  mylcd.print("[");
+  if(state.current_moisture<10)
+    mylcd.print("0");
+  mylcd.print((int)state.current_moisture);
+  mylcd.print("");
+  mylcd.print("]%");
+  if(state.moisture_target<=99)
+    mylcd.print(" ");
 
+
+
+  //line3
+  mylcd.setPosition(3,0);
+  mylcd.print(translate(CICLO));
+  mylcd.print("000'00''");
+  mylcd.print("ON");
+  mylcd.print("100%");
+
+  //line4
+  mylcd.setPosition(4,0);
+  mylcd.print(translate(ST_MAX));
+  if(state.temps_max<10)
+    mylcd.print("0");
+  mylcd.print((int)state.temps_max);
+  mylcd.print(" ");
+  mylcd.print(translate(MIN));
+  if(state.temps_min<10)
+    mylcd.print("0");
+  mylcd.print((int)state.temps_min);
+  mylcd.print(" ");
+  int currenttemp=state.current_temps;
+  if(currenttemp<0){
+    mylcd.print("-"); 
+  }
+  else{
+    mylcd.print("+");
+  }
+  mylcd.print(currenttemp);
+  mylcd.print("C");
+ mylcd.boxCursorOff(); 
+  switch(selectionStatus)
+  {
+   case S_HSO:
+   
+   if(!isEditing){
+    mylcd.setPosition(2,2);
+    mylcd.boxCursorOn(); 
+   }else{
+      mylcd.setPosition(2,5);
+      mylcd.boxCursorOn(); 
+   }
+    break;
+    case S_HSMIN:
+    if(!isEditing){
+    mylcd.setPosition(2,9);
+    mylcd.boxCursorOn(); 
+   }else{
+      mylcd.setPosition(2,12);
+      mylcd.boxCursorOn(); 
+   }
+   break;
+   case S_TSMAX:
+   if(!isEditing){
+    mylcd.setPosition(4,4);
+    mylcd.boxCursorOn(); 
+   }else{
+      mylcd.setPosition(4,7);
+      mylcd.boxCursorOn(); 
+   }
+   break;
+   case S_TSMIN:
+   if(!isEditing){
+    mylcd.setPosition(4,11);
+    mylcd.boxCursorOn(); 
+   }else{
+      mylcd.setPosition(4,14);
+      mylcd.boxCursorOn(); 
+   }
+   break;
+   
+  }
+}
