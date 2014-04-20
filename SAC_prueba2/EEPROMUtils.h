@@ -7,7 +7,6 @@ EEPROMUtils: this file contains all the information about the Configuration
   IN this file there is the functions for use the EEPROM for store the 
   configuration.
   
-  Version: 1.1(b)
   Author: Victor Suarez Garcia<suarez.garcia.victor@gmail.com>
   Co-Author: David Cuevas Lopez<mr.cavern@gmail.com>
   

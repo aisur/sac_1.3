@@ -7,6 +7,38 @@
 #include <Time.h>
 #include <time.h>
 
+/****************************************************************
+SAC: This is the Main File of SAC Project:
+  http://saccultivo.com
+  
+  IN this file we can see all the functions for the correct functionality of the SAC Unit for 1 Output Channel
+  
+  Author: Victor Suarez Garcia<suarez.garcia.victor@gmail.com>
+  Co-Author: David Cuevas Lopez<mr.cavern@gmail.com>
+  
+  * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Version History:
+ * 1.1. Initial Version. Written by Øyvind Kolås pippin@gimp.org in 2013.
+ * 1.2. Some Changes for more readablity. written by victor suarez suarez.garcia.victor@gmail.com and David Cuevas mr.cavern@gmail.com in March 2014.
+ * 1.3. Improved all the Functionality for 20x4 Screen and improved for 1.3 PCB Version. written by victor suarez suarez.garcia.victor@gmail.com and David Cuevas mr.cavern@gmail.com in April 2014
+ 
+
+ * Current Version: 1.3.
+*************************************************************************/
+
+
 #include "LCDUtils.h"
 #include "RTCUtils.h"
 #include "EEPROMUtils.h"
@@ -95,33 +127,34 @@ enum s_selectStatus
   S_PINTERVAL,
   S_TSMAX,
   S_TSMIN,
-  
+
 };
 /*
  * MENU STRUCTURE 
  */
 typedef struct MenuItem
 {
-   int label;
-   int  state; 
+  int label;
+  int  state; 
 };
- MenuItem main_menu[] ={
+MenuItem main_menu[] ={
   {
-    S_LANGUAGE,IDIOMA    }
+    S_LANGUAGE,IDIOMA      }
   ,{
-    S_DATE,FECHA    }
+    S_DATE,FECHA      }
   ,
   {
-    S_HOUR,HORA    }
+    S_HOUR,HORA      }
   ,{
-    S_SATCALIBRATION,CALIBRACION_SAT    }
+    S_SATCALIBRATION,CALIBRACION_SAT      }
   ,
   {
-    S_RESET,RESET_CONFIG    }
-  ,{S_ABOUT,ABOUT}
+    S_RESET,RESET_CONFIG      }
   ,{
-    S_RETURN_TO,END_SELECTION    }
-    
+    S_ABOUT,ABOUT  }
+  ,{
+    S_RETURN_TO,END_SELECTION      }
+
 };
 
 int current_menu;
@@ -149,11 +182,11 @@ State previous_state;
 
 Relay relay[MAX_RELAYS]={
   {
-    RELAY1_PIN,R_IRRIGATION,RELAY_OFF }
+    RELAY1_PIN,R_IRRIGATION,RELAY_OFF   }
   ,{
-    RELAY2_PIN,R_DISCONNECTED,RELAY_OFF      }
+    RELAY2_PIN,R_DISCONNECTED,RELAY_OFF        }
   ,{
-    RELAY3_PIN,R_DISCONNECTED,RELAY_OFF }
+    RELAY3_PIN,R_DISCONNECTED,RELAY_OFF   }
 };
 /*
  * GLOBAL VARIABLES
@@ -187,14 +220,15 @@ void setup()
   actualizar_pantalla=true;
   // setupFlowRate();
 
-  
+
   irrigating=false;
   current_selectionstate=MENU;
   if(!load_Settings(current_config)){
     current_config=reset_Settings();
     current_mstate=SELECCION;
-  }else{
-   current_mstate=ESTADO; 
+  }
+  else{
+    current_mstate=ESTADO; 
   }
   initializeGlobalVars();
 }
@@ -218,9 +252,9 @@ void setup_pins(){
   for(int i=0;i<MAX_RELAYS;i++)
   {
     pinMode(relay[i].gpio_pin,OUTPUT);
-   
+
   }
-  
+
   isEditing=false;
 }
 void loop(){
@@ -375,11 +409,11 @@ void handleEvent(int event)
     }
     if(event==BUTTONCENTER)
     {
-     mylcd.clear();
-     current_mstate=EDICION;
-     actualizar_pantalla=true;
-     selectionStatus=S_HSO;
- 
+      mylcd.clear();
+      current_mstate=EDICION;
+      actualizar_pantalla=true;
+      selectionStatus=S_HSO;
+
     }
     break; 
   case SELECCION:
@@ -387,7 +421,7 @@ void handleEvent(int event)
     handleEventSelection(event);
 
     break;
-    case EDICION:
+  case EDICION:
     handleEventSelectStatus(event);
     break;
   }
@@ -395,101 +429,102 @@ void handleEvent(int event)
 void handleEventSelectStatus(int event)
 {
   if(event==BUTTONCENTER)
-         {
-       isEditing=!isEditing;
-       actualizar_pantalla=true; 
-         }
-   if(!isEditing){
-     if(event==BUTTONDOWN)
-      {
-       selectionStatus++;
-       selectionStatus%=6;
-       actualizar_pantalla=true;
-      } 
-      if(event==BUTTONUP)
-      {
-       selectionStatus--;
-       selectionStatus=(selectionStatus<0)?5:selectionStatus%6;
-       actualizar_pantalla=true;
-      }
-     
-      if(event==BUTTONCENTERLONG)
-      {
-         
-        selectionStatus=S_HSO;
-        current_mstate=ESTADO;
+  {
+    isEditing=!isEditing;
+    actualizar_pantalla=true; 
+  }
+  if(!isEditing){
+    if(event==BUTTONDOWN)
+    {
+      selectionStatus++;
+      selectionStatus%=6;
+      actualizar_pantalla=true;
+    } 
+    if(event==BUTTONUP)
+    {
+      selectionStatus--;
+      selectionStatus=(selectionStatus<0)?5:selectionStatus%6;
+      actualizar_pantalla=true;
+    }
+
+    if(event==BUTTONCENTERLONG)
+    {
+
+      selectionStatus=S_HSO;
+      current_mstate=ESTADO;
+      actualizar_pantalla=true;
+      mylcd.clear();
+      mylcd.boxCursorOff(); 
+      //Store current state settings
+      current_config.moisture_target=current_sensorsvalues.cached_maxmoisture;
+      current_config.moisture_min=current_sensorsvalues.cached_minmoisture;
+      current_config.temps_max=current_sensorsvalues.cached_tempmax;
+      current_config.temps_min=current_sensorsvalues.cached_tempmin;
+      store_Settings(current_config);
+    }
+
+  }
+  else{
+
+    switch(selectionStatus)
+    {
+    case S_HSO:
+      if(event==BUTTONDOWN){
+        current_sensorsvalues.cached_maxmoisture++;
+        current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
         actualizar_pantalla=true;
-        mylcd.clear();
-         mylcd.boxCursorOff(); 
-         //Store current state settings
-         current_config.moisture_target=current_sensorsvalues.cached_maxmoisture;
-         current_config.moisture_min=current_sensorsvalues.cached_minmoisture;
-         current_config.temps_max=current_sensorsvalues.cached_tempmax;
-         current_config.temps_min=current_sensorsvalues.cached_tempmin;
-         store_Settings(current_config);
       }
-     
-     }else{
-       
-       switch(selectionStatus)
-        {
-          case S_HSO:
-           if(event==BUTTONDOWN){
-            current_sensorsvalues.cached_maxmoisture++;
-            current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
-            actualizar_pantalla=true;
-           }
-           if(event==BUTTONUP){
-            current_sensorsvalues.cached_maxmoisture--;
-            current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
-            actualizar_pantalla=true;
-           }
-           break;
-        case S_HSMIN:
-         if(event==BUTTONDOWN){
-            current_sensorsvalues.cached_minmoisture++;
-            current_sensorsvalues.cached_minmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_maxmoisture:(int)current_sensorsvalues.cached_minmoisture%100;
-            actualizar_pantalla=true;
-           }
-           if(event==BUTTONUP){
-            current_sensorsvalues.cached_minmoisture--;
-            current_sensorsvalues.cached_minmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_maxmoisture:(int)current_sensorsvalues.cached_minmoisture%100;
-            actualizar_pantalla=true;
-           }
-           break;
-          case S_PCICLE:
-              
-           break;
-           case S_TSMAX:
-             if(event==BUTTONUP){
-            current_sensorsvalues.cached_tempmax--;
-            current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax<=current_sensorsvalues.cached_tempmin)?current_sensorsvalues.cached_tempmin:(int)current_sensorsvalues.cached_tempmax%100;
-            actualizar_pantalla=true;
-           }
-           if(event==BUTTONDOWN){
-            current_sensorsvalues.cached_tempmax++;
-            current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax<=current_sensorsvalues.cached_tempmin)?current_sensorsvalues.cached_tempmin:(int)current_sensorsvalues.cached_tempmax%100;
-            actualizar_pantalla=true;
-           }
-            break;
-            case S_TSMIN:
-              if(event==BUTTONUP){
-            current_sensorsvalues.cached_tempmax--;
-            current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax>=current_sensorsvalues.cached_tempmax)?current_sensorsvalues.cached_tempmax:(int)current_sensorsvalues.cached_tempmin%100;
-            actualizar_pantalla=true;
-           }
-           if(event==BUTTONDOWN){
-            current_sensorsvalues.cached_tempmin++;
-            current_sensorsvalues.cached_tempmin=(current_sensorsvalues.cached_tempmin>=current_sensorsvalues.cached_tempmax)?current_sensorsvalues.cached_tempmax:(int)current_sensorsvalues.cached_tempmin%100;
-            actualizar_pantalla=true;
-           }
-            break;
-          default:
-   
-          break;
-        }
-     }
-     
+      if(event==BUTTONUP){
+        current_sensorsvalues.cached_maxmoisture--;
+        current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
+        actualizar_pantalla=true;
+      }
+      break;
+    case S_HSMIN:
+      if(event==BUTTONDOWN){
+        current_sensorsvalues.cached_minmoisture++;
+        current_sensorsvalues.cached_minmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_maxmoisture:(int)current_sensorsvalues.cached_minmoisture%100;
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONUP){
+        current_sensorsvalues.cached_minmoisture--;
+        current_sensorsvalues.cached_minmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_maxmoisture:(int)current_sensorsvalues.cached_minmoisture%100;
+        actualizar_pantalla=true;
+      }
+      break;
+    case S_PCICLE:
+
+      break;
+    case S_TSMAX:
+      if(event==BUTTONUP){
+        current_sensorsvalues.cached_tempmax--;
+        current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax<=current_sensorsvalues.cached_tempmin)?current_sensorsvalues.cached_tempmin:(int)current_sensorsvalues.cached_tempmax%100;
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWN){
+        current_sensorsvalues.cached_tempmax++;
+        current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax<=current_sensorsvalues.cached_tempmin)?current_sensorsvalues.cached_tempmin:(int)current_sensorsvalues.cached_tempmax%100;
+        actualizar_pantalla=true;
+      }
+      break;
+    case S_TSMIN:
+      if(event==BUTTONUP){
+        current_sensorsvalues.cached_tempmax--;
+        current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax>=current_sensorsvalues.cached_tempmax)?current_sensorsvalues.cached_tempmax:(int)current_sensorsvalues.cached_tempmin%100;
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWN){
+        current_sensorsvalues.cached_tempmin++;
+        current_sensorsvalues.cached_tempmin=(current_sensorsvalues.cached_tempmin>=current_sensorsvalues.cached_tempmax)?current_sensorsvalues.cached_tempmax:(int)current_sensorsvalues.cached_tempmin%100;
+        actualizar_pantalla=true;
+      }
+      break;
+    default:
+
+      break;
+    }
+  }
+
 }
 
 /*
@@ -563,11 +598,11 @@ void handleEventSelection(int event)
     break;
 
   case FECHA:
-   if(isEditing)
-     handleEventEditingDate(event);
-   else
-    handleEventSelectionDate(event);
-     
+    if(isEditing)
+      handleEventEditingDate(event);
+    else
+      handleEventSelectionDate(event);
+
     break;
   case HORA:
     if(isEditing) 
@@ -598,9 +633,9 @@ void handleEventSelection(int event)
     if(event==BUTTONCENTER)
     {
 
-        current_selectionstate=MENU;
-        actualizar_pantalla=true;
-        mylcd.clear();
+      current_selectionstate=MENU;
+      actualizar_pantalla=true;
+      mylcd.clear();
     }
     break;
   case END_SELECTION:
@@ -614,50 +649,50 @@ void handleEventSelectionDate(int event)
 {
   switch(current_selectionDateState)
   {
-    
-    
-    default:
-    
+
+
+  default:
+
     if(event==BUTTONUP)
-      {
-        current_selectionDateState--;
-        current_selectionDateState%=5;
-        actualizar_pantalla=true;
-      } 
-      if(event==BUTTONDOWN)
-      {
-        current_selectionDateState++;
-        current_selectionDateState%=5;
-        actualizar_pantalla=true;
-      }
-      if(event==BUTTONCENTER)
-      {
-         isEditing=true;
-         actualizar_pantalla=true;
-         mylcd.clear(); 
-      }
-      if(current_selectionDateState==SAVE && event==BUTTONCENTER)
-      {
-        current_selectionstate=MENU;
-        actualizar_pantalla=true;
-        current_menu=0;
-        mylcd.clear();
-        tm.Day=editDays;
-        tm.Month=editMonths;
-        tm.Year=CalendarYrToTm(editYears);
-        setHour(tm);
-      }
-      if(current_selectionDateState==BACK && event==BUTTONCENTER)
-      {
-        current_selectionstate=MENU;
-        actualizar_pantalla=true;
-        current_menu=0;
-        mylcd.clear();
-      }
-      break;
+    {
+      current_selectionDateState--;
+      current_selectionDateState%=5;
+      actualizar_pantalla=true;
+    } 
+    if(event==BUTTONDOWN)
+    {
+      current_selectionDateState++;
+      current_selectionDateState%=5;
+      actualizar_pantalla=true;
+    }
+    if(event==BUTTONCENTER)
+    {
+      isEditing=true;
+      actualizar_pantalla=true;
+      mylcd.clear(); 
+    }
+    if(current_selectionDateState==SAVE && event==BUTTONCENTER)
+    {
+      current_selectionstate=MENU;
+      actualizar_pantalla=true;
+      current_menu=0;
+      mylcd.clear();
+      tm.Day=editDays;
+      tm.Month=editMonths;
+      tm.Year=CalendarYrToTm(editYears);
+      setHour(tm);
+    }
+    if(current_selectionDateState==BACK && event==BUTTONCENTER)
+    {
+      current_selectionstate=MENU;
+      actualizar_pantalla=true;
+      current_menu=0;
+      mylcd.clear();
+    }
+    break;
   }
-   
-    
+
+
 }
 void handleEventSelectionHour(int event)
 {
@@ -752,7 +787,7 @@ void handleEventEditingDate(int event)
       mylcd.clear();
     }
     break;
-    case YEAR:
+  case YEAR:
     if(event==BUTTONDOWN){
       editYears++;
       editYears=(editYears>2032)?editYears=2000:editYears;  
@@ -770,7 +805,7 @@ void handleEventEditingDate(int event)
     }
     break;
   default:
-   
+
     break; 
   }
 
@@ -849,10 +884,10 @@ void drawSeleccion()
     drawSelectLanguage();
     break;
   case FECHA:
-   if(!isEditing)
-    drawDate();
+    if(!isEditing)
+      drawDate();
     else
-     drawEditingDate(current_selectionDateState);
+      drawEditingDate(current_selectionDateState);
     break;
   case HORA:
     if(!isEditing)
@@ -863,7 +898,7 @@ void drawSeleccion()
   case CALIBRACION_SAT:
     drawCalibrationSat();
     break;
-    case ABOUT:
+  case ABOUT:
     drawAbout();
     break;
   }
@@ -982,7 +1017,7 @@ void drawState(State & state)
   mylcd.print(currenttemp);
   mylcd.print("C");
   //Serial.println(line1);
-  
+
   //Serial.println(total);
   //LCD_Message(&mylcd,line1,line2,line3,"bb");
 }
@@ -994,41 +1029,43 @@ void drawState(State & state)
 void update_relay_state (void)
 {
   byte i;
-  
+
   for (i=0; i < MAX_RELAYS; i++){
 
-   
-      Relay rele = relay[i];
-      switch (rele.role){
-      case R_IRRIGATION:
-         boolean relaystate=false;
-          if (current_state.current_moisture <= current_state.moisture_MIN )
-          {
-            
-            if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
-            {
-               
-                 
-                    relaystate=true;
-                    
-            }
-          }else{
-            if (current_state.current_moisture <= current_state.moisture_MAX )
-            {
-              relaystate=true;
-            }
-          }
-        if(relaystate)
+
+    Relay rele = relay[i];
+    switch (rele.role){
+    case R_IRRIGATION:
+      boolean relaystate=false;
+      if (current_state.current_moisture <= current_state.moisture_MIN )
       {
-       relay_on(rele); 
-      }else
+
+        if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
+        {
+
+
+          relaystate=true;
+
+        }
+      }
+      else{
+        if (current_state.current_moisture <= current_state.moisture_MAX )
+        {
+          relaystate=true;
+        }
+      }
+      if(relaystate)
+      {
+        relay_on(rele); 
+      }
+      else
       {
         relay_off(rele); 
-        
+
       }
-     break;
-      }
-     
+      break;
+    }
+
   }
 }
 
@@ -1206,36 +1243,36 @@ byte getDaysofMonth(byte month) {
 }
 void drawEditingDate(byte currentDateState)
 {
-   byte title;
-   int data;
-   switch(currentDateState)
-   {
-     
-      case DAY:
-         title=S_EDITDAY;
-         data=editDays;
-       break; 
-      case MONTH:
-         title=S_EDITMONTH;
-         data=editMonths;
-        break;
-      case YEAR:
-         title=S_EDITDAY;
-         data=editYears;
-         break;
-   }
-   mylcd.boxCursorOff();
-   mylcd.setPosition(1,0);
-   printTitle(mylcd,translate(title));
-   mylcd.setPosition(2,0);
-   if(data<10)
-     mylcd.print(F("0"));
-   mylcd.print(data);
-   if(data>1000)
-   mylcd.setPosition(2,3);
-   else
-      mylcd.setPosition(2,1);
-   mylcd.boxCursorOn();
+  byte title;
+  int data;
+  switch(currentDateState)
+  {
+
+  case DAY:
+    title=S_EDITDAY;
+    data=editDays;
+    break; 
+  case MONTH:
+    title=S_EDITMONTH;
+    data=editMonths;
+    break;
+  case YEAR:
+    title=S_EDITDAY;
+    data=editYears;
+    break;
+  }
+  mylcd.boxCursorOff();
+  mylcd.setPosition(1,0);
+  printTitle(mylcd,translate(title));
+  mylcd.setPosition(2,0);
+  if(data<10)
+    mylcd.print(F("0"));
+  mylcd.print(data);
+  if(data>1000)
+    mylcd.setPosition(2,3);
+  else
+    mylcd.setPosition(2,1);
+  mylcd.boxCursorOn();
 }
 
 void static drawAbout()
@@ -1305,63 +1342,70 @@ void static drawSelectStatus(State & state)
   }
   mylcd.print(currenttemp);
   mylcd.print("C");
- mylcd.boxCursorOff(); 
+  mylcd.boxCursorOff(); 
   switch(selectionStatus)
   {
-   case S_HSO:
-   
-   if(!isEditing){
-    mylcd.setPosition(2,2);
-    mylcd.boxCursorOn(); 
-   }else{
+  case S_HSO:
+
+    if(!isEditing){
+      mylcd.setPosition(2,2);
+      mylcd.boxCursorOn(); 
+    }
+    else{
       mylcd.setPosition(2,5);
       mylcd.boxCursorOn(); 
-   }
+    }
     break;
-    case S_HSMIN:
+  case S_HSMIN:
     if(!isEditing){
-    mylcd.setPosition(2,9);
-    mylcd.boxCursorOn(); 
-   }else{
+      mylcd.setPosition(2,9);
+      mylcd.boxCursorOn(); 
+    }
+    else{
       mylcd.setPosition(2,12);
       mylcd.boxCursorOn(); 
-   }
-   break;
-   case S_TSMAX:
-   if(!isEditing){
-    mylcd.setPosition(4,4);
-    mylcd.boxCursorOn(); 
-   }else{
+    }
+    break;
+  case S_TSMAX:
+    if(!isEditing){
+      mylcd.setPosition(4,4);
+      mylcd.boxCursorOn(); 
+    }
+    else{
       mylcd.setPosition(4,7);
       mylcd.boxCursorOn(); 
-   }
-   break;
-   case S_TSMIN:
-   if(!isEditing){
-    mylcd.setPosition(4,11);
-    mylcd.boxCursorOn(); 
-   }else{
+    }
+    break;
+  case S_TSMIN:
+    if(!isEditing){
+      mylcd.setPosition(4,11);
+      mylcd.boxCursorOn(); 
+    }
+    else{
       mylcd.setPosition(4,14);
       mylcd.boxCursorOn(); 
-   }
-   break;
-   case S_PCICLE:
-   if(!isEditing){
-    mylcd.setPosition(3,4);
-    mylcd.boxCursorOn(); 
-   }else{
+    }
+    break;
+  case S_PCICLE:
+    if(!isEditing){
+      mylcd.setPosition(3,4);
+      mylcd.boxCursorOn(); 
+    }
+    else{
       mylcd.setPosition(3,9);
       mylcd.boxCursorOn(); 
-   }
-   break;
-   case S_PINTERVAL:
-   if(!isEditing){
-    mylcd.setPosition(3,15);
-    mylcd.boxCursorOn(); 
-   }else{
+    }
+    break;
+  case S_PINTERVAL:
+    if(!isEditing){
+      mylcd.setPosition(3,15);
+      mylcd.boxCursorOn(); 
+    }
+    else{
       mylcd.setPosition(3,19);
       mylcd.boxCursorOn(); 
-   }
-   break;
+    }
+    break;
   }
 }
+
