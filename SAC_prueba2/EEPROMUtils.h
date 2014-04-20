@@ -98,7 +98,6 @@ int load_Settings(Configuration & settings)
    int i=0;
    byte* data=(byte *)&settings;
    for(i=1;i<sizeof(settings);i++){
-     byte b=data[i];
      data[i]=EEPROM.read(e+i);
    }
    memcpy(&settings,data,sizeof(settings));

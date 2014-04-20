@@ -22,7 +22,6 @@ volatile int NbTopsFan;
 int Calc;
 
 boolean readFieldCapacity(int fcapacity_calib){
-        int Fcapacity= analogRead(FC_PIN);
          
          digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
   
@@ -222,6 +221,7 @@ cached_sensors initSensorsCache(){
    current_sensors.cached_tempmax=0;
    current_sensors.cached_minmoisture=0;
    current_sensors.cached_maxmoisture=0;
+   return current_sensors;
 }
 int readFCapacityValue()
 {

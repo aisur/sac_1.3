@@ -96,13 +96,7 @@ String parseDigit(int n)
    return str;
 }
 
- double getMinutesBetween(tmElements_t time1,tmElements_t time2)
- {
-     time_t ctime1=makeTime(time1);
-     time_t ctime2=makeTime(time2);
-     double timebetween=0.0;
-     return timebetween/60;
- }
+
 
 tmElements_t parseTimeAndHour(char * td)
 {
