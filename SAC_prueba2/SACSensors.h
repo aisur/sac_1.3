@@ -205,7 +205,6 @@ State read_sensors(cached_sensors & last_values)
 	current_state.moisture_target=last_values.cached_maxmoisture;
 	current_state.temps_max=last_values.cached_tempmax;
 	current_state.temps_min=last_values.cached_tempmin;
-        current_state.current_temps=last_values.cached_temperature;
 	current_state.field_capacity=last_values.cached_fieldCapacity;
 	return current_state; 
   
@@ -230,6 +229,7 @@ int readFCapacityValue()
   
   int cached_fc = analogRead(FC_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
+  cached_fc=map(cached_fc,0,602,0,100);
   return cached_fc;
 }
 boolean state_changed(State state1,State state2)

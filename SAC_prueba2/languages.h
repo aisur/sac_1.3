@@ -72,7 +72,7 @@ TranslatedString string_db[]={
   /* for languages missing translations, english will be used instead */
   {{"  F.C.","C.C."}},
   {{"E ","E "}},
-  {{"SOIL","HSO:"}},
+  {{"OSH:","HSO:"}},
   {{"PU ","RIEGO"}},
   {{"LANGUAGE","IDIOMA"}},
   {{"ENGLISH",         "INGLES"}},

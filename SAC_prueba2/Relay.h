@@ -62,13 +62,13 @@ void relay_on (Relay relay)
 
 
 
-void relay_off (Relay *relay)
+void relay_off (Relay relay)
 {
-  if (relay->state == RELAY_OFF)
+  if (relay.state == RELAY_OFF)
     return;
-  relay->state = RELAY_OFF;
+  relay.state = RELAY_OFF;
 
-  digitalWrite(relay->gpio_pin, LOW);
+  digitalWrite(relay.gpio_pin, LOW);
 
 }
 
