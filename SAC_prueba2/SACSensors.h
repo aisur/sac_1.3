@@ -27,7 +27,8 @@ boolean readFieldCapacity(int fcapacity_calib){
   
   int cached_fc = analogRead(FC_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
-  return        map(cached_fc,0,fcapacity_calib,0,1);
+          int fcapacity=map(cached_fc,0,fcapacity_calib,0,100);
+   return fcapacity>=100;
 }
 
 void npm();

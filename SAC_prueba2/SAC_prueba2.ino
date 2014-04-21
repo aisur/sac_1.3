@@ -8,15 +8,15 @@
 #include <time.h>
 
 /****************************************************************
-SAC: This is the Main File of SAC Project:
-  http://saccultivo.com
-  
-  IN this file we can see all the functions for the correct functionality of the SAC Unit for 1 Output Channel
-  
-  Author: Victor Suarez Garcia<suarez.garcia.victor@gmail.com>
-  Co-Author: David Cuevas Lopez<mr.cavern@gmail.com>
-  
-  * This library is free software; you can redistribute it and/or
+ * SAC: This is the Main File of SAC Project:
+ * http://saccultivo.com
+ * 
+ * IN this file we can see all the functions for the correct functionality of the SAC Unit for 1 Output Channel
+ * 
+ * Author: Victor Suarez Garcia<suarez.garcia.victor@gmail.com>
+ * Co-Author: David Cuevas Lopez<mr.cavern@gmail.com>
+ * 
+ * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; either
  * version 2.1 of the License, or (at your option) any later version.
@@ -33,10 +33,10 @@ SAC: This is the Main File of SAC Project:
  * 1.1. Initial Version. Written by Øyvind Kolås pippin@gimp.org in 2013.
  * 1.2. Some Changes for more readablity. written by victor suarez suarez.garcia.victor@gmail.com and David Cuevas mr.cavern@gmail.com in March 2014.
  * 1.3. Improved all the Functionality for 20x4 Screen and improved for 1.3 PCB Version. written by victor suarez suarez.garcia.victor@gmail.com and David Cuevas mr.cavern@gmail.com in April 2014
- 
-
+ * 
+ * 
  * Current Version: 1.3.
-*************************************************************************/
+ *************************************************************************/
 
 
 #include "LCDUtils.h"
@@ -139,21 +139,21 @@ typedef struct MenuItem
 };
 MenuItem main_menu[] ={
   {
-    S_LANGUAGE,IDIOMA      }
+    S_LANGUAGE,IDIOMA        }
   ,{
-    S_DATE,FECHA      }
+    S_DATE,FECHA        }
   ,
   {
-    S_HOUR,HORA      }
+    S_HOUR,HORA        }
   ,{
-    S_SATCALIBRATION,CALIBRACION_SAT      }
+    S_SATCALIBRATION,CALIBRACION_SAT        }
   ,
   {
-    S_RESET,RESET_CONFIG      }
+    S_RESET,RESET_CONFIG        }
   ,{
-    S_ABOUT,ABOUT  }
+    S_ABOUT,ABOUT    }
   ,{
-    S_RETURN_TO,END_SELECTION      }
+    S_RETURN_TO,END_SELECTION        }
 
 };
 
@@ -182,11 +182,11 @@ State previous_state;
 
 Relay relay[MAX_RELAYS]={
   {
-    RELAY1_PIN,R_IRRIGATION,RELAY_OFF   }
+    RELAY1_PIN,R_IRRIGATION,RELAY_OFF     }
   ,{
-    RELAY2_PIN,R_DISCONNECTED,RELAY_OFF        }
+    RELAY2_PIN,R_DISCONNECTED,RELAY_OFF          }
   ,{
-    RELAY3_PIN,R_DISCONNECTED,RELAY_OFF   }
+    RELAY3_PIN,R_DISCONNECTED,RELAY_OFF     }
 };
 /*
  * GLOBAL VARIABLES
@@ -239,6 +239,7 @@ void initializeGlobalVars(){
   current_sensorsvalues.cached_tempmin=(current_config.temps_min!=0)?current_config.temps_min:8;
   current_sensorsvalues.cached_minmoisture=(current_config.moisture_min!=0)?current_config.moisture_min:30;
   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
+
 }
 /**
  * setup SAC Pins.
@@ -1037,32 +1038,39 @@ void update_relay_state (void)
     switch (rele.role){
     case R_IRRIGATION:
       boolean relaystate=false;
-      if (current_state.current_moisture <= current_state.moisture_MIN )
+     // if(!current_state.field_capacity){
+      if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
       {
-
-        if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
+        if (current_state.current_moisture <= current_state.moisture_MIN )
         {
+
+
 
 
           relaystate=true;
 
+
+        }
+        else{
+          if (rele.state==RELAY_ON && current_state.current_moisture <= current_state.moisture_MAX )
+          {
+            relaystate=true;
+          }
         }
       }
-      else{
-        if (current_state.current_moisture <= current_state.moisture_MAX )
-        {
-          relaystate=true;
-        }
-      }
+    //  }
       if(relaystate)
       {
-        relay_on(rele); 
+        rele.state=RELAY_ON;
+        relay_on(relay[i].gpio_pin);
       }
       else
       {
-        relay_off(rele); 
+        rele.state=RELAY_OFF;
+        relay_off(rele.gpio_pin);
 
       }
+      relay[i]=rele;
       break;
     }
 
@@ -1408,4 +1416,5 @@ void static drawSelectStatus(State & state)
     break;
   }
 }
+
 

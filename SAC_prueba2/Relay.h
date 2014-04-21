@@ -48,27 +48,23 @@ typedef struct _Relay Relay;
  
 
 
-void relay_on (Relay relay)
+void relay_on (byte relayPin)
 {
-  if (relay.state == RELAY_ON)
-    return;
-  relay.state = RELAY_ON;
+  
 
 
-  if (relay.gpio_pin)
-    digitalWrite(relay.gpio_pin, HIGH);
+    digitalWrite(relayPin, HIGH);
 
 }
 
 
 
-void relay_off (Relay relay)
+void relay_off (byte relayPin)
 {
-  if (relay.state == RELAY_OFF)
-    return;
-  relay.state = RELAY_OFF;
+  
+  
 
-  digitalWrite(relay.gpio_pin, LOW);
+  digitalWrite(relayPin, LOW);
 
 }
 
