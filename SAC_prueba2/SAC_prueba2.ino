@@ -201,7 +201,7 @@ byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
 byte center_pressed_state=0;
-byte selectionStatus=0;
+byte selectionStatus=S_HSO;
 byte editHours;
 byte editMinutes;
 byte editDays;
@@ -266,6 +266,7 @@ void loop(){
   //ALWAYS UPDATE SCREEN WHEN STATE CHANGES
   update_State(current_sensorsvalues,tm,current_config.calib_FCapacity);
   current_state=read_sensors(current_sensorsvalues);
+  if(current_mstate==ESTADO){
   if(state_changed(current_state,previous_state) || time_between(lastUpdate,tm)>1){
     actualizar_pantalla=true; 
     previous_state=current_state;
@@ -273,6 +274,7 @@ void loop(){
   }
   else{
     actualizar_pantalla=false; 
+  }
   }
 
 
