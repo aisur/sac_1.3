@@ -463,6 +463,7 @@ void handleEventSelectStatus(int event)
       current_config.moisture_min=current_sensorsvalues.cached_minmoisture;
       current_config.temps_max=current_sensorsvalues.cached_tempmax;
       current_config.temps_min=current_sensorsvalues.cached_tempmin;
+      current_config.pump_cicle_length=current_sensorsvalues.cached_cicle_length;
       store_Settings(current_config);
     }
 
@@ -496,7 +497,12 @@ void handleEventSelectStatus(int event)
       }
       break;
     case S_PCICLE:
-
+        if(event==BUTTONDOWN)
+        {
+          current_sensorsvalues.cached_cicle_length++;
+          current_sensorsvalues.cached_cicle_length=(current_sensorsvalues.cached_cicle_length>=300)?0:current_sensorsvalues.cached_cicle_length;
+          actualizar_pantalla=true;
+        }
       break;
     case S_TSMAX:
       if(event==BUTTONUP){
@@ -1338,7 +1344,18 @@ void static drawSelectStatus(State & state)
   //line3
   mylcd.setPosition(3,0);
   mylcd.print(translate(CICLO));
-  mylcd.print("000'00''");
+  int minutes=state.cicle_length_seconds/60;
+  if(minutes<100)
+    mylcd.print("0");
+  if(minutes<10)
+   mylcd.print("0");
+  mylcd.print(minutes);
+  mylcd.print("'");
+  byte seconds= state.cicle_length_seconds%60;
+  if(seconds<10)
+    mylcd.print("0");
+  mylcd.print(seconds);
+  mylcd.print("''");
   mylcd.print("ON");
   mylcd.print("100%");
 
