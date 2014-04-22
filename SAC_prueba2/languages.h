@@ -12,9 +12,7 @@ int active_language=1;
 
 
 enum {
-  S_WA=0,
-  S_V,
-  S_S,
+  S_S=0,
   S_PU,
   S_LANGUAGE,
   S_ENGLISH,
@@ -43,7 +41,6 @@ enum {
   S_DURATION,
   S_CONFIG,
   S_RANGE,
-  S_LOG,
   MIN,
   ST_MAX,
   CONSUMPTION,
@@ -60,7 +57,8 @@ enum {
   S_EDITMONTH,
   S_EDITYEAR,
   S_ABOUT,
-  S_SAC
+  S_SAC,
+  S_EDITSTATE
 };
 
 #define MAX_LANGUAGE 2
@@ -70,8 +68,6 @@ typedef struct TranslatedString {
 
 TranslatedString string_db[]={
   /* for languages missing translations, english will be used instead */
-  {{"  F.C.","C.C."}},
-  {{"E ","E "}},
   {{"OSH:","HSO:"}},
   {{"PU ","RIEGO"}},
   {{"LANGUAGE","IDIOMA"}},
@@ -103,7 +99,6 @@ TranslatedString string_db[]={
   {{"DURATION",        "DURACION"}},
   {{"CONFIGURATION",   "CONFIGURACION"}},
   {{"Hysteresis: ",  }},
-  {{"Log"}},
   {{"MIN:","MIN:"}},
   {{"STMAX:","TSMAX:"}},
   {{"CONSUMPTION:","CONSUMO:"}},
@@ -120,7 +115,8 @@ TranslatedString string_db[]={
   {{"EDIT MONTH","EDITAR MES"}},
   {{"EDIT YEAR","EDITAR ANO"}},
   {{"ABOUT","ACERCA DE"}},
-  {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}}
+  {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}},
+  {{"EDIT STATE","EDITAR ESTADO"}}
 };
 
 

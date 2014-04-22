@@ -47,6 +47,7 @@ typedef struct {
   float cached_maxmoisture;//Last Maximum Temperature
   int cached_waterFlowdiameter;//Water Flow Diameter
   boolean cached_fieldCapacity;//last result for the field capacity
+  int cached_cicle_length;
   tmElements_t cached_lastWaterEvent;//Last Time and Date for Pumping.
 } cached_sensors;
 /*
@@ -86,7 +87,7 @@ typedef struct {
 	 * Current Water Consumption in m3
 	 */
 	float consumption;
-
+        int cicle_length_seconds;
 	boolean field_capacity;
 
 }State;
@@ -206,6 +207,7 @@ State read_sensors(cached_sensors & last_values)
 	current_state.temps_max=last_values.cached_tempmax;
 	current_state.temps_min=last_values.cached_tempmin;
 	current_state.field_capacity=last_values.cached_fieldCapacity;
+        current_state.cicle_length_seconds=last_values.cached_cicle_length*60;
 	return current_state; 
   
 }

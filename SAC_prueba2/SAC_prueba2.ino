@@ -239,7 +239,7 @@ void initializeGlobalVars(){
   current_sensorsvalues.cached_tempmin=(current_config.temps_min!=0)?current_config.temps_min:8;
   current_sensorsvalues.cached_minmoisture=(current_config.moisture_min!=0)?current_config.moisture_min:30;
   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
-
+ current_sensorsvalues.cached_cicle_length=(current_config.pump_cicle_length!=0)?current_config.pump_cicle_length:15;
 }
 /**
  * setup SAC Pins.
@@ -994,7 +994,18 @@ void drawState(State & state)
   //line3
   mylcd.setPosition(3,0);
   mylcd.print(translate(CICLO));
-  mylcd.print("000'00''");
+  int minutes=state.cicle_length_seconds/60;
+  if(minutes<100)
+    mylcd.print("0");
+  if(minutes<10)
+   mylcd.print("0");
+  mylcd.print(minutes);
+  mylcd.print("'");
+  byte seconds= state.cicle_length_seconds%60;
+  if(seconds<10)
+    mylcd.print("0");
+  mylcd.print(seconds);
+  mylcd.print("''");
   mylcd.print("ON");
   mylcd.print("100%");
 
@@ -1040,7 +1051,7 @@ void update_relay_state (void)
     switch (rele.role){
     case R_IRRIGATION:
       boolean relaystate=false;
-     // if(!current_state.field_capacity){
+      if(!current_state.field_capacity){
       if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
       {
         if (current_state.current_moisture <= current_state.moisture_MIN )
@@ -1060,7 +1071,7 @@ void update_relay_state (void)
           }
         }
       }
-    //  }
+     }
       if(relaystate)
       {
         rele.state=RELAY_ON;
@@ -1300,7 +1311,7 @@ void static drawAbout()
 void static drawSelectStatus(State & state)
 {
   mylcd.setPosition(1,0);
-  printTitle(mylcd,"PRUEBA SSTADO");
+  printTitle(mylcd,translate(S_EDITSTATE));
   //Line2
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_S));
