@@ -240,6 +240,7 @@ void initializeGlobalVars(){
   current_sensorsvalues.cached_minmoisture=(current_config.moisture_min!=0)?current_config.moisture_min:30;
   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
  current_sensorsvalues.cached_cicle_length=(current_config.pump_cicle_length!=0)?current_config.pump_cicle_length:15;
+ current_sensorsvalues.cached_pump_percent=(current_config.pump_percent!=0)?current_config.pump_percent:100;
 }
 /**
  * setup SAC Pins.
@@ -464,6 +465,7 @@ void handleEventSelectStatus(int event)
       current_config.temps_max=current_sensorsvalues.cached_tempmax;
       current_config.temps_min=current_sensorsvalues.cached_tempmin;
       current_config.pump_cicle_length=current_sensorsvalues.cached_cicle_length;
+      current_config.pump_percent=current_sensorsvalues.cached_pump_percent;
       store_Settings(current_config);
     }
 
@@ -503,6 +505,26 @@ void handleEventSelectStatus(int event)
           current_sensorsvalues.cached_cicle_length=(current_sensorsvalues.cached_cicle_length>=300)?0:current_sensorsvalues.cached_cicle_length;
           actualizar_pantalla=true;
         }
+        if(event==BUTTONUP)
+        {
+          current_sensorsvalues.cached_cicle_length--;
+          current_sensorsvalues.cached_cicle_length=(current_sensorsvalues.cached_cicle_length<0)?300:current_sensorsvalues.cached_cicle_length;
+          actualizar_pantalla=true;
+        }
+      break;
+    case S_PINTERVAL:
+      if(event==BUTTONDOWN)
+      {
+         current_sensorsvalues.cached_pump_percent++;
+         current_sensorsvalues.cached_pump_percent=(current_sensorsvalues.cached_pump_percent>100)?0:current_sensorsvalues.cached_pump_percent;
+         actualizar_pantalla=true;
+      }
+      if(event==BUTTONUP)
+      {
+         current_sensorsvalues.cached_pump_percent--;
+         current_sensorsvalues.cached_pump_percent=(current_sensorsvalues.cached_pump_percent>100)?100:current_sensorsvalues.cached_pump_percent;
+         actualizar_pantalla=true;
+      }
       break;
     case S_TSMAX:
       if(event==BUTTONUP){
@@ -1013,7 +1035,12 @@ void drawState(State & state)
   mylcd.print(seconds);
   mylcd.print("''");
   mylcd.print("ON");
-  mylcd.print("100%");
+  if(current_sensorsvalues.cached_pump_percent<100)
+   mylcd.print("0");
+   if(current_sensorsvalues.cached_pump_percent<10)
+    mylcd.print("0");
+  mylcd.print(current_sensorsvalues.cached_pump_percent);
+  mylcd.print("%");
 
   //line4
   mylcd.setPosition(4,0);
@@ -1357,7 +1384,12 @@ void static drawSelectStatus(State & state)
   mylcd.print(seconds);
   mylcd.print("''");
   mylcd.print("ON");
-  mylcd.print("100%");
+  if(current_sensorsvalues.cached_pump_percent<100)
+   mylcd.print("0");
+   if(current_sensorsvalues.cached_pump_percent<10)
+    mylcd.print("0");
+  mylcd.print(current_sensorsvalues.cached_pump_percent);
+  mylcd.print("%");
 
   //line4
   mylcd.setPosition(4,0);
