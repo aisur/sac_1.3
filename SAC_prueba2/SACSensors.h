@@ -1,5 +1,36 @@
 #include <Time.h>
 #include <OneWire.h>
+
+/****************************************************************
+SACSensors: this file contains all the functions for use the sensors and use the sensor cache. 
+ for the SAC Project:
+  http://saccultivo.com
+   
+   In this file we have the functions for use de cache sensors
+  
+  Author: Victor Suarez Garcia<suarez.garcia.victor@gmail.com>
+  Co-Author: David Cuevas Lopez<mr.cavern@gmail.com>
+  
+  * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Version History:
+ * 0.1. Initial Version
+ * 0.2. Added cache struct and state struct.
+ * 0.3. Added Field Capacity Sensor Read.
+ * Current Version: 0.3.
+*************************************************************************/
+
 #define DS19S20_PIN A1
 
 /*
@@ -20,7 +51,12 @@
 #define FC_PIN A2
 volatile int NbTopsFan;
 int Calc;
-
+/**
+* Read the field capacity in function of the previous calibration.
+* Parameters:
+* fcapacity_calib: field capacity calibration; the maximum value where the field is saturated.
+* returns true if the field is saturated or false otherwise
+*/
 boolean readFieldCapacity(int fcapacity_calib){
          
          digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
@@ -92,7 +128,11 @@ typedef struct {
 	boolean field_capacity;
 
 }State;
-
+/**
+ *
+ *read the Soilt Temperature
+ * returns: the Soil Temperature in Celsius.
+*/ 
 float read_SoilTemp()
 {
   OneWire ds(DS19S20_PIN);  // on pin A1
@@ -138,17 +178,25 @@ float read_SoilTemp()
 
   return TemperatureSum;
 }
-
+ /*
+ *
+ * Read the Soil Moisture.
+ * returns Soil Moisture in Percent.
+ */
  int read_moisture(){
    
   digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
   
   int cached_moisture = analogRead(MOISTURE_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
-  cached_moisture=  map(cached_moisture,0,602,0,100);
+  cached_moisture=  map(cached_moisture,0,604,0,100);
   return cached_moisture;
  }
- 
+ /*
+ *
+ * Read the WaterLevel Tank
+ * return true if tank have water or false if not.
+ */
  boolean getWaterLevel(){
 
 	int WaterLevel=analogRead(WTS_PIN);
@@ -177,7 +225,14 @@ float getWaterFlowRate ()
   return Calc;
   /*  Serial.print (Calc, DEC); //Prints the number calculated above*/
 }
-
+/*
+ *
+ * update the sensors cache with the current state.
+ * Parameters:
+ * last_values : last sensors values.
+ * tmElements: current Time.
+ * fcCapacityCalib: field Capacity calibration.
+ */
 void update_State(cached_sensors & last_values,tmElements_t current_event,int FCapacityCalib)
 {
             
