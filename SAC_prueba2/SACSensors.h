@@ -246,7 +246,13 @@ void update_State(cached_sensors & last_values,tmElements_t current_event,int FC
 	    last_values.cached_flowvolume+=curr_flowrate/60000;//FlowRate(L/m) to FlowRate(m3/s).
 	    last_values.cached_fieldCapacity=readFieldCapacity(FCapacityCalib);
 }
-
+/*
+*
+* get the current state from the cached values.
+* Parameters:
+* last_values: cache for sensors values.
+* returns: current state.
+*/
 State read_sensors(cached_sensors & last_values)
 {
  State current_state;

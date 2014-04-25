@@ -58,12 +58,13 @@ enum {
   S_EDITYEAR,
   S_ABOUT,
   S_SAC,
-  S_EDITSTATE
+  S_EDITSTATE,
+  S_FC
 };
 
 #define MAX_LANGUAGE 2
 typedef struct TranslatedString {
-  const char *languages[MAX_LANGUAGE];
+ PROGMEM const char *languages[MAX_LANGUAGE];
 } TranslatedString;
 
 TranslatedString string_db[]={
@@ -116,7 +117,8 @@ TranslatedString string_db[]={
   {{"EDIT YEAR","EDITAR ANO"}},
   {{"ABOUT","ACERCA DE"}},
   {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}},
-  {{"EDIT STATE","EDITAR ESTADO"}}
+  {{"EDIT STATE","EDITAR ESTADO"}},
+  {{"FC","CC"}}
 };
 
 

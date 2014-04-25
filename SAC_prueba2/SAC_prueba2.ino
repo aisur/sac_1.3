@@ -65,6 +65,7 @@
 #define BUTTONDOWN 1
 #define BUTTONCENTER 2
 #define BUTTONCENTERLONG 3
+#define TIMEOUT 4
 #define IDLE -1
 
 #define VERSION "1.3"
@@ -174,6 +175,7 @@ tmElements_t tm;
 cached_sensors current_sensorsvalues;
 State current_state;
 State previous_state;
+
 /*
  * RELAY CONFIG
  *EACH RELAY USES A ROLE TO CONTROL IT'S FUNCTIONS
@@ -208,6 +210,8 @@ byte editDays;
 byte editMonths;
 int editYears;
 boolean isEditing;
+long time1;
+long time2;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -241,6 +245,7 @@ void initializeGlobalVars(){
   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
  current_sensorsvalues.cached_cicle_length=(current_config.pump_cicle_length!=0)?current_config.pump_cicle_length:15;
  current_sensorsvalues.cached_pump_percent=(current_config.pump_percent!=0)?current_config.pump_percent:100;
+  time1=millis();
 }
 /**
  * setup SAC Pins.
@@ -281,7 +286,7 @@ void loop(){
 
 
   int event=get_event();
-
+ // magia(mylcd,freeRam());
 
 
   handleEvent(event);
@@ -319,7 +324,16 @@ int freeRam()
 int get_event(){
   if(button_up_pressed()==HIGH) return BUTTONUP;
   if(button_down_pressed()==HIGH) return BUTTONDOWN;
-  return button_center_pressed();
+  time2=millis();
+  int event=button_center_pressed();
+  if(event>=0){
+     time1=millis(); 
+  }
+  if((time2-time1)>=10000){
+    time1=millis();
+    event= TIMEOUT;
+  }
+  return event;
 
 }
 /*
@@ -372,23 +386,20 @@ int button_center_pressed()
   byte current_state=digitalRead(BUTTON_CENTER_PIN);
 
   if(current_state==HIGH){
-    center_pressed_state++;
-    return IDLE;
-
+    if(center_pressed_state>=7 ){
+      center_pressed_state=0;
+    return BUTTONCENTERLONG;
+    }else{
+        center_pressed_state++;
+    }
+   
   }
   else{
-
-    if(center_pressed_state<7 and center_pressed_state>0)//4 cicles per second and 3 secconds
-    {
-      center_pressed_state=0;
-      return BUTTONCENTER;
-    }
-    else{
-      if(center_pressed_state!=0){
-        center_pressed_state=0;
-        return BUTTONCENTERLONG;
-      }
-    }
+   if(center_pressed_state<7 && center_pressed_state>0)
+   {
+   center_pressed_state=0;
+    return BUTTONCENTER;
+   }
   }
   return IDLE;
 
@@ -451,7 +462,7 @@ void handleEventSelectStatus(int event)
       actualizar_pantalla=true;
     }
 
-    if(event==BUTTONCENTERLONG)
+    if(event==TIMEOUT)
     {
 
       selectionStatus=S_HSO;
@@ -995,7 +1006,14 @@ void drawState(State & state)
   mylcd.print(tm.Month);
   mylcd.print("/");
   mylcd.print(tmYearToCalendar(tm.Year));
-
+  if(state.field_capacity)
+  { mylcd.print(" ");
+    mylcd.print(translate(S_FC));
+  }
+  else
+  {
+   mylcd.print("   "); 
+  }
   //Line2
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_S));
@@ -1412,7 +1430,8 @@ void static drawSelectStatus(State & state)
   }
   mylcd.print(currenttemp);
   mylcd.print("C");
-  mylcd.boxCursorOff(); 
+  mylcd.boxCursorOff();
+  mylcd .underlineCursorOff();
   switch(selectionStatus)
   {
   case S_HSO:
@@ -1423,7 +1442,7 @@ void static drawSelectStatus(State & state)
     }
     else{
       mylcd.setPosition(2,5);
-      mylcd.boxCursorOn(); 
+      mylcd.underlineCursorOn(); 
     }
     break;
   case S_HSMIN:
@@ -1433,7 +1452,7 @@ void static drawSelectStatus(State & state)
     }
     else{
       mylcd.setPosition(2,12);
-      mylcd.boxCursorOn(); 
+      mylcd.underlineCursorOn(); 
     }
     break;
   case S_TSMAX:
@@ -1443,7 +1462,7 @@ void static drawSelectStatus(State & state)
     }
     else{
       mylcd.setPosition(4,7);
-      mylcd.boxCursorOn(); 
+      mylcd.underlineCursorOn(); 
     }
     break;
   case S_TSMIN:
@@ -1453,7 +1472,7 @@ void static drawSelectStatus(State & state)
     }
     else{
       mylcd.setPosition(4,14);
-      mylcd.boxCursorOn(); 
+      mylcd.underlineCursorOn(); 
     }
     break;
   case S_PCICLE:
@@ -1463,7 +1482,7 @@ void static drawSelectStatus(State & state)
     }
     else{
       mylcd.setPosition(3,9);
-      mylcd.boxCursorOn(); 
+      mylcd.underlineCursorOn(); 
     }
     break;
   case S_PINTERVAL:
@@ -1473,7 +1492,7 @@ void static drawSelectStatus(State & state)
     }
     else{
       mylcd.setPosition(3,19);
-      mylcd.boxCursorOn(); 
+      mylcd.underlineCursorOn(); 
     }
     break;
   }
