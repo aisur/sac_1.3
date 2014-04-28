@@ -49,26 +49,32 @@ typedef struct _Relay Relay;
  
 
 
-void relay_on (byte relayPin)
+void relay_on (Relay & rele)
 {
   
 
-
-    digitalWrite(relayPin, HIGH);
+    rele.state=RELAY_ON;
+    digitalWrite(rele.gpio_pin, HIGH);
 
 }
 
 
 
-void relay_off (byte relayPin)
+void relay_off (Relay & rele)
 {
   
   
 
-  digitalWrite(relayPin, LOW);
+   rele.state=RELAY_OFF;
+    digitalWrite(rele.gpio_pin, LOW);
 
 }
 
+void relay_wait(Relay & rele)
+{
+   rele.state=RELAY_WAITING;
+    digitalWrite(rele.gpio_pin, LOW); 
+}
 enum Roles{
   R_DISCONNECTED=0,
   R_IRRIGATION,

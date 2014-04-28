@@ -84,7 +84,7 @@ typedef struct {
   int cached_waterFlowdiameter;//Water Flow Diameter
   boolean cached_fieldCapacity;//last result for the field capacity
   int cached_cicle_length;
-  tmElements_t cached_lastWaterEvent;//Last Time and Date for Pumping.
+  long cached_lastWaterEvent;//Last Time and Date for Pumping.
   byte cached_pump_percent;
 } cached_sensors;
 /*

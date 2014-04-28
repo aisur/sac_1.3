@@ -1120,41 +1120,28 @@ void update_relay_state (void)
         {
 
 
-
-
-          
-          current_sensorsvalues.cached_lastWaterEvent=tm;
-          irrigating=true;
-          rele.state=RELAY_ON;
+            relay_on(rele);  
+            current_sensorsvalues.cached_lastWaterEvent=millis(); 
+            irrigating=true;
 
         }
         else{
-          if (rele.state==RELAY_ON && current_state.current_moisture <= current_state.moisture_MAX )
+          if (rele.state!=RELAY_OFF && current_state.current_moisture <= current_state.moisture_MAX )
           {
             relaystate=checkPumpCicle(rele);
             if(!irrigating)
-             rele.state=RELAY_WAITING;
+             relay_wait(rele);
             else
-             rele.state=RELAY_ON;
+             relay_on(rele);
           }else{
-             relaystate=false; 
+             relay_off(rele);
           }
         }
-      }
+      }else{ relay_off(rele);}
+     }else{
+        relay_off(rele); 
      }
-      if(relaystate)
-      {
-        
-       
-        relay_on(relay[i].gpio_pin);
-      }
-      else
-      {
-       
-        rele.state=RELAY_OFF;
-        relay_off(rele.gpio_pin);
-
-      }
+      
       relay[i]=rele;
       break;
     }
@@ -1175,17 +1162,19 @@ boolean checkPumpCicle(Relay & rele){
   int totalNoIrrigationTime=((100-pumppercent)*cicleLength)/100;
    if(rele.state==RELAY_ON)
   {
-    if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,tm)>totalIrrigationTime)
+    //magia(mylcd,seconds_between(current_sensorsvalues.cached_lastWaterEvent,millis()));
+    if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,millis())>totalIrrigationTime)
     {
       irrigating= false;
-      current_sensorsvalues.cached_lastWaterEvent=tm;
+      current_sensorsvalues.cached_lastWaterEvent=millis();
+      
     }
   }else
      {
-       if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,tm)>totalNoIrrigationTime)
+       if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,millis())>totalNoIrrigationTime)
     {
       irrigating =true;
-      current_sensorsvalues.cached_lastWaterEvent=tm;
+      current_sensorsvalues.cached_lastWaterEvent=millis();
     }
    } 
   return irrigating;
