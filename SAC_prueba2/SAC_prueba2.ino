@@ -212,6 +212,12 @@ int editYears;
 boolean isEditing;
 long time1;
 long time2;
+int intervalTime;
+byte totalcounter;
+byte maxcounter;
+byte pumpcounter;
+long timepump1;
+long timepump2;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -226,6 +232,7 @@ void setup()
 
 
   irrigating=false;
+  pumpcounter=0;
   current_selectionstate=MENU;
   if(!load_Settings(current_config)){
     current_config=reset_Settings();
@@ -322,8 +329,8 @@ int freeRam()
  *  3: button CENTER is Pressed more than 3 seconds.
  */
 int get_event(){
-  if(button_up_pressed()==HIGH) return BUTTONUP;
-  if(button_down_pressed()==HIGH) return BUTTONDOWN;
+  if(button_up_pressed()==HIGH){time1=millis();   return BUTTONUP;}
+  if(button_down_pressed()==HIGH){time1=millis();  return BUTTONDOWN;}
   time2=millis();
   int event=button_center_pressed();
   if(event>=0){
@@ -1006,14 +1013,7 @@ void drawState(State & state)
   mylcd.print(tm.Month);
   mylcd.print("/");
   mylcd.print(tmYearToCalendar(tm.Year));
-  if(state.field_capacity)
-  { mylcd.print(" ");
-    mylcd.print(translate(S_FC));
-  }
-  else
-  {
-   mylcd.print("   "); 
-  }
+ 
   //Line2
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_S));
@@ -1025,7 +1025,13 @@ void drawState(State & state)
   if(state.moisture_MIN<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
-  mylcd.print(" ");
+   if(state.field_capacity)
+  { mylcd.print("*");
+  }
+  else
+  {
+   mylcd.print(" "); 
+  }
   mylcd.print("[");
   if(state.current_moisture<10)
     mylcd.print("0");
@@ -1101,7 +1107,7 @@ void update_relay_state (void)
     Relay rele = relay[i];
     switch (rele.role){
     case R_IRRIGATION:
-      boolean relaystate=false;
+      boolean relaystate=irrigating;
       if(!current_state.field_capacity){
       if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
       {
@@ -1111,25 +1117,35 @@ void update_relay_state (void)
 
 
 
-          relaystate=true;
-
+          
+          current_sensorsvalues.cached_lastWaterEvent=tm;
+          irrigating=true;
+          rele.state=RELAY_ON;
 
         }
         else{
           if (rele.state==RELAY_ON && current_state.current_moisture <= current_state.moisture_MAX )
           {
-            relaystate=true;
+            relaystate=checkPumpCicle(rele);
+            if(!irrigating)
+             rele.state=RELAY_WAITING;
+            else
+             rele.state=RELAY_ON;
+          }else{
+             relaystate=false; 
           }
         }
       }
      }
       if(relaystate)
       {
-        rele.state=RELAY_ON;
+        
+       
         relay_on(relay[i].gpio_pin);
       }
       else
       {
+       
         rele.state=RELAY_OFF;
         relay_off(rele.gpio_pin);
 
@@ -1147,15 +1163,28 @@ void update_relay_state (void)
  * BY INDICATING PUMP PERCENTAGE.
  * EXAMPLE: PUMP DURING FOUR MINUTES AT 50%. PUMPING WOULD BE ONE MINUTES ON & ONE MINUTES OFF, UNTIL COMPLETION OF THE CICLE OF FOUR MINUTES;
  */
-boolean checkPumpCicle(boolean irrigating,tmElements_t time1,tmElements_t time2){
-  int cicleLength=current_config.pump_cicle_length;
+boolean checkPumpCicle(Relay & rele){
+  int cicleLength=current_config.pump_cicle_length*60;
   int pumppercent= current_config.pump_percent;
   int totalIrrigationTime= (cicleLength*pumppercent)/100;
-  int intervalTime=cicleLength/totalIrrigationTime;
-
-  if(time_between(time1,time2)<intervalTime-1)
-    irrigating= !irrigating;
+  int totalNoIrrigationTime=((100-pumppercent)*cicleLength)/100;
+   if(rele.state==RELAY_ON)
+  {
+    if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,tm)>totalIrrigationTime)
+    {
+      irrigating= false;
+      current_sensorsvalues.cached_lastWaterEvent=tm;
+    }
+  }else
+     {
+       if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,tm)>totalNoIrrigationTime)
+    {
+      irrigating =true;
+      current_sensorsvalues.cached_lastWaterEvent=tm;
+    }
+   } 
   return irrigating;
+  
 } 
 /*
  * DRAW TIME SELECTION MENU
