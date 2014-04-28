@@ -1499,3 +1499,41 @@ void static drawSelectStatus(State & state)
 }
 
 
+void drawLightState(state &state)
+{
+  mylcd.setPosition(1,0);
+  if(tm.Hour<10) mylcd.print("0");
+  mylcd.print(tm.Hour);
+  mylcd.print(":");
+  if(tm.Minute<10) mylcd.print("0");
+  mylcd.print(tm.Minute);
+  mylcd.print("  ");
+  if(tm.Day<10) mylcd.print("0");
+  mylcd.print(tm.Day);
+  mylcd.print("/");
+  if(tm.Month<10) mylcd.print("0");
+  mylcd.print(tm.Month);
+  mylcd.print("/");
+  mylcd.print(tmYearToCalendar(tm.Year));
+  mylcd.setPosition(2,0);
+  mylcd.print(translate(S_START));
+  mylcd.setPosition(2,8);
+  if(state.light_startinghour<10) mylcd.print("0");
+  mylcd.print(state.light_startinghour);
+  mylcd.setPosition(2,10);
+  mylcd.print(":");
+  mylcd.setPosition(2,11);
+  if(state.light_startingminutes<10) mylcd.print("0");
+  mylcd.print(state.light_startingminutes);
+  mylcd.setPosition(3,0);
+  mylcd.print(translate(S_END));
+  mylcd.setPosition(3,3);
+  if(state.light_endinghour<10) mylcd.print("0");
+  mylcd.print(state.light_endinghour);
+  mylcd.setPosition(3,6);
+  mylcd.print(":");
+  mylcd.setPosition(3,7);
+  if(state.light_endingminutes<10) mylcd.print("0");
+  mylcd.print(state.light_endingminutes);
+}
+

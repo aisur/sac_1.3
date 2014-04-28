@@ -126,6 +126,10 @@ typedef struct {
 	float consumption;
         int cicle_length_seconds;
 	boolean field_capacity;
+        byte light_startinghour;
+        byte light_startingminutes;
+        byte light_endinghour;
+        byte light_endingminutes;
 
 }State;
 /**
