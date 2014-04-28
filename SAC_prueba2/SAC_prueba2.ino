@@ -1528,7 +1528,7 @@ void static drawSelectStatus(State & state)
 }
 
 
-void drawLightState(state &state)
+void drawLightState(State &state)
 {
   mylcd.setPosition(1,0);
   if(tm.Hour<10) mylcd.print("0");
@@ -1565,4 +1565,6 @@ void drawLightState(state &state)
   if(state.light_endingminutes<10) mylcd.print("0");
   mylcd.print(state.light_endingminutes);
 }
+
+
 
