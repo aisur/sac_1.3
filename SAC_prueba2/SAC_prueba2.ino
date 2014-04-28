@@ -130,6 +130,11 @@ enum s_selectStatus
   S_TSMIN,
 
 };
+enum s_lightSelectStatus
+{
+  S_LSTART=0,
+  S_LEND
+}
 /*
  * MENU STRUCTURE 
  */
@@ -1525,8 +1530,27 @@ void static drawSelectStatus(State & state)
     }
     break;
   }
+  case S_LSTART:
+    if(!isEditing){
+      mylcd.setPosition(2,6);
+      mylcd.boxCursorOn();
+    }
+    else{
+        mylcd.setPosition(2,8);
+        mylcd.underlineCursorOn()
+      }
+      break;
+   case S_LEND:
+   if(!isEditing){
+      mylcd.setPosition(3,3);
+      mylcd.boxCursorOn();
+    }
+    else{
+        mylcd.setPosition(3,5);
+        mylcd.underlineCursorOn()
+      }
+      break;
 }
-
 
 void drawLightState(State &state)
 {
@@ -1556,7 +1580,7 @@ void drawLightState(State &state)
   mylcd.print(state.light_startingminutes);
   mylcd.setPosition(3,0);
   mylcd.print(translate(S_END));
-  mylcd.setPosition(3,3);
+  mylcd.setPosition(3,4);
   if(state.light_endinghour<10) mylcd.print("0");
   mylcd.print(state.light_endinghour);
   mylcd.setPosition(3,6);
@@ -1567,4 +1591,30 @@ void drawLightState(State &state)
 }
 
 
-
+void drawLightSelectionStatus(State &state)
+{
+  mylcd.setPosition(1,0);
+  printTitle(mylcd,translate(S_EDITSTATE));
+  mylcd.setPosition(2,0);
+  mylcd.print(translate(S_START));
+  mylcd.setPosition(2,8);
+  if(state.light_startinghour<10)
+    mylcd.print("0");
+  mylcd.print(state.light_startinghour);
+  mylcd.setPosition(2,10);
+  mylcd.print(":");
+  mylcd.setPosition(2,11);
+  mylcd.print(state.light_startingminutes);
+  mylcd.setPosition(3,0);
+  mylcd.print(translate(S_END));
+  mylcd.setPosition(3,4);
+  if(state.light_endinghour<10)
+    mylcd.print("0");
+  mylcd.print(state.light_endinghour);
+  mylcd.setPosition(3,6);
+  mylcd.print(":");
+  mylcd.setPosition(3,7);
+    if(state.light_endingminutes<10)
+    mylcd.print("0");
+  mylcd.print(state.light_endingminutes);
+}

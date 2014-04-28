@@ -97,7 +97,7 @@ TranslatedString string_db[]={
   {{"OUTPUTS",          "SALIDAS"}},
   {{"Reset",           "RESET"}},
   {{"ON",              "ENCENDIDO"}},
-  {{"START",           "INICIO"}},
+  {{"START:",           "INICIO:"}},
   {{"DURATION",        "DURACION"}},
   {{"CONFIGURATION",   "CONFIGURACION"}},
   {{"Hysteresis: ",  }},
@@ -120,7 +120,7 @@ TranslatedString string_db[]={
   {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}},
   {{"EDIT STATE","EDITAR ESTADO"}},
   {{"FC","CC"}},
-  {{"END","FIN"}}
+  {{"END:","FIN:"}}
 };
 
 
