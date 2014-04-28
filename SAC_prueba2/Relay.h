@@ -34,6 +34,7 @@
   enum RelayState {
     RELAY_OFF=0,
     RELAY_ON,
+    RELAY_WAITING
  };
 
 typedef struct _Relay Relay;

@@ -58,8 +58,7 @@ enum {
   S_EDITYEAR,
   S_ABOUT,
   S_SAC,
-  S_EDITSTATE,
-  S_FC
+  S_EDITSTATE
 };
 
 #define MAX_LANGUAGE 2
@@ -117,8 +116,7 @@ TranslatedString string_db[]={
   {{"EDIT YEAR","EDITAR ANO"}},
   {{"ABOUT","ACERCA DE"}},
   {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}},
-  {{"EDIT STATE","EDITAR ESTADO"}},
-  {{"FC","CC"}}
+  {{"EDIT STATE","EDITAR ESTADO"}}
 };
 
 

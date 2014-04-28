@@ -127,7 +127,12 @@ long time_between(tmElements_t time1, tmElements_t time2)
   long nminutes2=  numberOfMinutes(makeTime(time2));
   return (nminutes2-nminutes1);
 }
-
+long seconds_between(tmElements_t time1,tmElements_t time2)
+{
+  long nseconds1= numberOfSeconds(makeTime(time1));
+  long nseconds2= numberOfSeconds(makeTime(time2));
+  return (nseconds2-nseconds1); 
+}
 void setHour(tmElements_t currentTime)
 {
    RTC.write(currentTime); 
