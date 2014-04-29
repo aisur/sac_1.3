@@ -134,7 +134,7 @@ enum s_lightSelectStatus
 {
   S_LSTART=0,
   S_LEND
-}
+};
 /*
  * MENU STRUCTURE 
  */
@@ -221,6 +221,7 @@ int intervalTime;
 byte totalcounter;
 byte maxcounter;
 byte pumpcounter;
+byte light_selectStatus=S_LSTART;
 long timepump1;
 long timepump2;
 //--------------------------------------------------------------------------
@@ -1519,26 +1520,7 @@ void static drawSelectStatus(State & state)
     }
     break;
   }
-  case S_LSTART:
-    if(!isEditing){
-      mylcd.setPosition(2,6);
-      mylcd.boxCursorOn();
-    }
-    else{
-        mylcd.setPosition(2,8);
-        mylcd.underlineCursorOn()
-      }
-      break;
-   case S_LEND:
-   if(!isEditing){
-      mylcd.setPosition(3,3);
-      mylcd.boxCursorOn();
-    }
-    else{
-        mylcd.setPosition(3,5);
-        mylcd.underlineCursorOn()
-      }
-      break;
+  
 }
 
 void drawLightState(State &state)
@@ -1606,4 +1588,26 @@ void drawLightSelectionStatus(State &state)
     if(state.light_endingminutes<10)
     mylcd.print("0");
   mylcd.print(state.light_endingminutes);
+  switch(light_selectStatus){
+  case S_LSTART:
+    if(!isEditing){
+      mylcd.setPosition(2,6);
+      mylcd.boxCursorOn();
+    }
+    else{
+        mylcd.setPosition(2,8);
+        mylcd.underlineCursorOn();
+      }
+      break;
+   case S_LEND:
+   if(!isEditing){
+      mylcd.setPosition(3,3);
+      mylcd.boxCursorOn();
+    }
+    else{
+        mylcd.setPosition(3,5);
+        mylcd.underlineCursorOn();
+      }
+      break;
+  }
 }
