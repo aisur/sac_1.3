@@ -71,7 +71,7 @@
 #define VERSION "1.3"
 
 
-void drawState(State & state);
+
 
 /*
  * DIFFERENT STATES TO MOVE THROUGH MENU
@@ -433,6 +433,13 @@ void handleEvent(int event)
       selectionStatus=S_HSO;
 
     }
+    if(event==TIMEOUT)
+    {
+    current_mstate=ROLEMENU;
+    mylcd.boxCursorOff();
+    actualizar_pantalla=true;
+    mylcd.clear();
+    }
     break; 
   case SELECCION:
 
@@ -468,7 +475,21 @@ void handleEventRoleSelectStatus(int event)
     current_rele=(current_rele<0)? 2:current_rele;
     actualizar_pantalla=true;
   }
+  if(event==BUTTONCENTER)
+  {
+    current_mstate=ESTADO;
+    actualizar_pantalla=true;
+    mylcd.boxCursorOff();
+    mylcd.clear(); 
+  }
+  if(event==TIMEOUT)
+  {
+    current_mstate=ROLEMENU;
+    mylcd.boxCursorOff();
+    actualizar_pantalla=true;
+  }
 }
+
 void handleEventSelectStatus(int event)
 {
   if(event==BUTTONCENTER)
@@ -946,6 +967,21 @@ void drawUI(State & state){
   }
 
 }
+void drawState(State & state)
+{
+  switch(current_rele)
+  {
+    case 0:
+     drawIrrigationState(state);
+    break;
+    case 1:
+    drawHumidificationState(state);
+    break;
+   case 2:
+    drawLigthState(state);
+   break; 
+  }
+}
 void drawSelectRoleMenu(State & state)
 {
   mylcd.setPosition(1,0);
@@ -1083,7 +1119,7 @@ void drawMenu()
  * draws the current state at LCD Screen
  * state: current state of sensors.
  */
-void drawState(State & state)
+void drawIrrigationState(State & state)
 {
   //Line1
   mylcd.setPosition(1,0);
@@ -1634,5 +1670,36 @@ void static drawSelectStatus(State & state)
     break;
   }
 }
-
+void drawHumidificationState(State & state)
+{
+   mylcd.setPosition(1,0);
+    printTitle(mylcd,"HUMIDIFICACION");
+    mylcd.setPosition(2,0);
+    mylcd.print("HR:");
+    mylcd.print("68%");
+    mylcd.print("  ");
+    mylcd.print("Rango:");
+    mylcd.print("-4");
+    mylcd.print("%");
+    mylcd.setPosition(3,0);
+    mylcd.print(translate(CICLO));
+    mylcd.print("15',00''");
+    mylcd.print("  ");
+    mylcd.print("ON");
+    mylcd.print("100");
+    mylcd.print("%");
+    
+    
+}
+void drawLigthState(State & state)
+{
+    mylcd.setPosition(1,0);
+    printTitle(mylcd,"LUZ");
+    mylcd.setPosition(2,0);
+    mylcd.print("INICIO:");
+    mylcd.print("21:00");
+    mylcd.setPosition(3,0);
+    mylcd.print("FIN:");
+    mylcd.print("23:00");
+}
 
