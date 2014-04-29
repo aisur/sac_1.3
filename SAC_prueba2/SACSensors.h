@@ -31,12 +31,12 @@ SACSensors: this file contains all the functions for use the sensors and use the
  * Current Version: 0.3.
 *************************************************************************/
 
-#define DS19S20_PIN A1
+#define DS19S20_PIN A7
 
 /*
  * MOISURE POWER PIN
  */
-#define SOIL_MOISTURE_POWER_PIN 3
+#define SOIL_MOISTURE_POWER_PIN 5
 
 /*
  * MOISURE PIN
@@ -46,7 +46,7 @@ SACSensors: this file contains all the functions for use the sensors and use the
 /*
  * WATER TANK PIN
  */
-#define WTS_PIN A2
+#define WTS_PIN A7
 #define WFL_PIN 6
 #define FC_PIN A2
 volatile int NbTopsFan;
@@ -189,7 +189,7 @@ float read_SoilTemp()
   
   int cached_moisture = analogRead(MOISTURE_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
-  cached_moisture=  map(cached_moisture,0,604,0,100);
+  cached_moisture=  map(cached_moisture,0,100,0,100);
   return cached_moisture;
  }
  /*
@@ -238,6 +238,8 @@ void update_State(cached_sensors & last_values,tmElements_t current_event,int FC
             
             float curr_moisture=read_moisture();
 	    float curr_temps= read_SoilTemp();
+              if(curr_temps<-60)
+                curr_temps=22.0;
 	    float curr_flowrate=0.0;//getWaterFlowRate();
   
             last_values.cached_moisture=curr_moisture;
@@ -292,9 +294,9 @@ int readFCapacityValue()
 {
   digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
   
-  int cached_fc = analogRead(FC_PIN);
+  int cached_fc = analogRead(MOISTURE_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
-  cached_fc=map(cached_fc,0,602,0,100);
+  
   return cached_fc;
 }
 boolean state_changed(State state1,State state2)

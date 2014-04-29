@@ -435,10 +435,11 @@ void handleEvent(int event)
     }
     if(event==TIMEOUT)
     {
+    mylcd.clear();
     current_mstate=ROLEMENU;
     mylcd.boxCursorOff();
     actualizar_pantalla=true;
-    mylcd.clear();
+
     }
     break; 
   case SELECCION:
@@ -1515,6 +1516,7 @@ void static drawRoleMenu(State & state)
       mylcd.print("0");
   mylcd.print((int)state.current_moisture);
   mylcd.print("%");
+  mylcd.print(" ");
   
   //line3
   mylcd.setPosition(3,0);
@@ -1684,7 +1686,7 @@ void drawHumidificationState(State & state)
     mylcd.setPosition(3,0);
     mylcd.print(translate(CICLO));
     mylcd.print("15',00''");
-    mylcd.print("  ");
+    mylcd.print("");
     mylcd.print("ON");
     mylcd.print("100");
     mylcd.print("%");
