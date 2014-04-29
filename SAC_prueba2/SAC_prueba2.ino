@@ -84,6 +84,8 @@ enum States
   ESTADO,
   EDICION,
   SELECCION,
+  ROLEMENU,
+  ROLESELECT
 };
 /*
  * DIFFERENT STATES IN SELECTION MODE
@@ -208,6 +210,7 @@ byte editHours;
 byte editMinutes;
 byte editDays;
 byte editMonths;
+byte current_rele=0;
 int editYears;
 boolean isEditing;
 long time1;
@@ -232,7 +235,7 @@ void setup()
     current_mstate=SELECCION;
   }
   else{
-    current_mstate=ESTADO; 
+    current_mstate=ROLEMENU; 
   }
   initializeGlobalVars();
 }
@@ -272,7 +275,7 @@ void loop(){
   //ALWAYS UPDATE SCREEN WHEN STATE CHANGES
   update_State(current_sensorsvalues,tm,current_config.calib_FCapacity);
   current_state=read_sensors(current_sensorsvalues);
-  if(current_mstate==ESTADO){
+  if(current_mstate==ESTADO|| current_mstate==ROLEMENU){
   if(state_changed(current_state,previous_state) || time_between(lastUpdate,tm)>1){
     actualizar_pantalla=true; 
     previous_state=current_state;
@@ -437,8 +440,33 @@ void handleEvent(int event)
 
     break;
   case EDICION:
-    handleEventSelectStatus(event);
+    handleEventRoleSelectStatus(event);
     break;
+   case ROLEMENU:
+     if(event==BUTTONCENTER)
+       {
+         current_mstate=ROLESELECT;
+         actualizar_pantalla=true;
+       }
+   break;
+   case ROLESELECT:
+   handleEventRoleSelectStatus(event);
+   break;
+  }
+}
+void handleEventRoleSelectStatus(int event)
+{
+  if(event==BUTTONDOWN)
+  {
+    current_rele++;
+    current_rele%=3;
+    actualizar_pantalla=true;
+  }
+  if(event==BUTTONUP)
+  {
+    current_rele--;
+    current_rele=(current_rele<0)? 2:current_rele;
+    actualizar_pantalla=true;
   }
 }
 void handleEventSelectStatus(int event)
@@ -905,12 +933,77 @@ void drawUI(State & state){
       break;
     case EDICION:
       drawSelectStatus(state);
+      break;
+    case ROLEMENU:
+     drawRoleMenu(state);
+
+     break;
+     case ROLESELECT:
+     drawSelectRoleMenu(state);
+     break;
     }
     actualizar_pantalla=false;
   }
 
 }
-
+void drawSelectRoleMenu(State & state)
+{
+  mylcd.setPosition(1,0);
+  if(tm.Hour<10) mylcd.print("0");
+  mylcd.print(tm.Hour);
+  mylcd.print(":");
+  if(tm.Minute<10) mylcd.print("0");
+  mylcd.print(tm.Minute);
+  mylcd.print("  ");
+  if(tm.Day<10) mylcd.print("0");
+  mylcd.print(tm.Day);
+  mylcd.print("/");
+  if(tm.Month<10) mylcd.print("0");
+  mylcd.print(tm.Month);
+  mylcd.print("/");
+  mylcd.print(tmYearToCalendar(tm.Year));
+  
+  mylcd.setPosition(2,0);
+  mylcd.print("C1:");
+  mylcd.print(translate(S_IRRIGATION));
+  mylcd.print(" ");
+  mylcd.print("HS:");
+  if(state.current_moisture<10)
+      mylcd.print("0");
+  mylcd.print((int)state.current_moisture);
+  mylcd.print("%");
+  
+  //line3
+  mylcd.setPosition(3,0);
+  mylcd.print("C2:");
+  mylcd.print("HUMIDIFIC.");
+  mylcd.print(" ");
+  mylcd.print("HR:");
+  mylcd.print("00");
+  mylcd.print("%");
+  
+  //line4
+  mylcd.setPosition(4,0);
+  mylcd.print("C3:");
+  mylcd.print("LUZ:");
+  mylcd.print(" ");
+  mylcd.print("OFF");
+  switch(current_rele)
+ {
+   case 0:
+     mylcd.setPosition(2,1);
+     mylcd.boxCursorOn();
+   break;
+   case 1:
+     mylcd.setPosition(3,1);
+     mylcd.boxCursorOn();
+   break;
+   case 2:
+    mylcd.setPosition(4,1);
+     mylcd.boxCursorOn();
+   break;
+ } 
+}
 /*
  * DRAWS INTERFACE FOR THE DIFFERENT MENUS
  */
@@ -946,6 +1039,7 @@ void drawSeleccion()
   }
 
 }
+
 /*
  * DRAWS LANGUAGE SELECTION MENU
  */
@@ -1358,7 +1452,50 @@ void static drawAbout()
   mylcd.setPosition(4,0);
   mylcd.print(F("VERSION "));
   mylcd.print(VERSION);
-}  
+} 
+void static drawRoleMenu(State & state)
+{
+  mylcd.setPosition(1,0);
+  if(tm.Hour<10) mylcd.print("0");
+  mylcd.print(tm.Hour);
+  mylcd.print(":");
+  if(tm.Minute<10) mylcd.print("0");
+  mylcd.print(tm.Minute);
+  mylcd.print("  ");
+  if(tm.Day<10) mylcd.print("0");
+  mylcd.print(tm.Day);
+  mylcd.print("/");
+  if(tm.Month<10) mylcd.print("0");
+  mylcd.print(tm.Month);
+  mylcd.print("/");
+  mylcd.print(tmYearToCalendar(tm.Year));
+  
+  mylcd.setPosition(2,0);
+  mylcd.print("C1:");
+  mylcd.print(translate(S_IRRIGATION));
+  mylcd.print(" ");
+  mylcd.print("HS:");
+  if(state.current_moisture<10)
+      mylcd.print("0");
+  mylcd.print((int)state.current_moisture);
+  mylcd.print("%");
+  
+  //line3
+  mylcd.setPosition(3,0);
+  mylcd.print("C2:");
+  mylcd.print("HUMIDIFIC.");
+  mylcd.print(" ");
+  mylcd.print("HR:");
+  mylcd.print("00");
+  mylcd.print("%");
+  
+  //line4
+  mylcd.setPosition(4,0);
+  mylcd.print("C3:");
+  mylcd.print("LUZ:");
+  mylcd.print(" ");
+  mylcd.print("OFF");
+}
 void static drawSelectStatus(State & state)
 {
   mylcd.setPosition(1,0);
