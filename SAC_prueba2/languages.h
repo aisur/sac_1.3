@@ -59,8 +59,7 @@ enum {
   S_ABOUT,
   S_SAC,
   S_EDITSTATE,
-  S_FC,
-  S_END
+  S_FC
 };
 
 #define MAX_LANGUAGE 2
@@ -97,7 +96,7 @@ TranslatedString string_db[]={
   {{"OUTPUTS",          "SALIDAS"}},
   {{"Reset",           "RESET"}},
   {{"ON",              "ENCENDIDO"}},
-  {{"START:",           "INICIO:"}},
+  {{"START",           "COMIENZA"}},
   {{"DURATION",        "DURACION"}},
   {{"CONFIGURATION",   "CONFIGURACION"}},
   {{"Hysteresis: ",  }},
@@ -119,8 +118,7 @@ TranslatedString string_db[]={
   {{"ABOUT","ACERCA DE"}},
   {{"DEVELOP BY AISUR","DESARROLLO POR AISUR"}},
   {{"EDIT STATE","EDITAR ESTADO"}},
-  {{"FC","CC"}},
-  {{"END:","FIN:"}}
+  {{"FC","CC"}}
 };
 
 

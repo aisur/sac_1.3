@@ -130,11 +130,6 @@ enum s_selectStatus
   S_TSMIN,
 
 };
-enum s_lightSelectStatus
-{
-  S_LSTART=0,
-  S_LEND
-};
 /*
  * MENU STRUCTURE 
  */
@@ -217,13 +212,6 @@ int editYears;
 boolean isEditing;
 long time1;
 long time2;
-int intervalTime;
-byte totalcounter;
-byte maxcounter;
-byte pumpcounter;
-byte light_selectStatus=S_LSTART;
-long timepump1;
-long timepump2;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -238,7 +226,6 @@ void setup()
 
 
   irrigating=false;
-  pumpcounter=0;
   current_selectionstate=MENU;
   if(!load_Settings(current_config)){
     current_config=reset_Settings();
@@ -335,8 +322,8 @@ int freeRam()
  *  3: button CENTER is Pressed more than 3 seconds.
  */
 int get_event(){
-  if(button_up_pressed()==HIGH){time1=millis();   return BUTTONUP;}
-  if(button_down_pressed()==HIGH){time1=millis();  return BUTTONDOWN;}
+  if(button_up_pressed()==HIGH) return BUTTONUP;
+  if(button_down_pressed()==HIGH) return BUTTONDOWN;
   time2=millis();
   int event=button_center_pressed();
   if(event>=0){
@@ -1019,7 +1006,14 @@ void drawState(State & state)
   mylcd.print(tm.Month);
   mylcd.print("/");
   mylcd.print(tmYearToCalendar(tm.Year));
- 
+  if(state.field_capacity)
+  { mylcd.print(" ");
+    mylcd.print(translate(S_FC));
+  }
+  else
+  {
+   mylcd.print("   "); 
+  }
   //Line2
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_S));
@@ -1031,13 +1025,7 @@ void drawState(State & state)
   if(state.moisture_MIN<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
-   if(state.field_capacity)
-  { mylcd.print("*");
-  }
-  else
-  {
-   mylcd.print(" "); 
-  }
+  mylcd.print(" ");
   mylcd.print("[");
   if(state.current_moisture<10)
     mylcd.print("0");
@@ -1113,7 +1101,7 @@ void update_relay_state (void)
     Relay rele = relay[i];
     switch (rele.role){
     case R_IRRIGATION:
-      boolean relaystate=irrigating;
+      boolean relaystate=false;
       if(!current_state.field_capacity){
       if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
       {
@@ -1121,28 +1109,31 @@ void update_relay_state (void)
         {
 
 
-            relay_on(rele);  
-            current_sensorsvalues.cached_lastWaterEvent=millis(); 
-            irrigating=true;
+
+
+          relaystate=true;
+
 
         }
         else{
-          if (rele.state!=RELAY_OFF && current_state.current_moisture <= current_state.moisture_MAX )
+          if (rele.state==RELAY_ON && current_state.current_moisture <= current_state.moisture_MAX )
           {
-            relaystate=checkPumpCicle(rele);
-            if(!irrigating)
-             relay_wait(rele);
-            else
-             relay_on(rele);
-          }else{
-             relay_off(rele);
+            relaystate=true;
           }
         }
-      }else{ relay_off(rele);}
-     }else{
-        relay_off(rele); 
+      }
      }
-      
+      if(relaystate)
+      {
+        rele.state=RELAY_ON;
+        relay_on(relay[i].gpio_pin);
+      }
+      else
+      {
+        rele.state=RELAY_OFF;
+        relay_off(rele.gpio_pin);
+
+      }
       relay[i]=rele;
       break;
     }
@@ -1156,30 +1147,15 @@ void update_relay_state (void)
  * BY INDICATING PUMP PERCENTAGE.
  * EXAMPLE: PUMP DURING FOUR MINUTES AT 50%. PUMPING WOULD BE ONE MINUTES ON & ONE MINUTES OFF, UNTIL COMPLETION OF THE CICLE OF FOUR MINUTES;
  */
-boolean checkPumpCicle(Relay & rele){
-  int cicleLength=current_config.pump_cicle_length*60;
+boolean checkPumpCicle(boolean irrigating,tmElements_t time1,tmElements_t time2){
+  int cicleLength=current_config.pump_cicle_length;
   int pumppercent= current_config.pump_percent;
   int totalIrrigationTime= (cicleLength*pumppercent)/100;
-  int totalNoIrrigationTime=((100-pumppercent)*cicleLength)/100;
-   if(rele.state==RELAY_ON)
-  {
-    //magia(mylcd,seconds_between(current_sensorsvalues.cached_lastWaterEvent,millis()));
-    if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,millis())>totalIrrigationTime)
-    {
-      irrigating= false;
-      current_sensorsvalues.cached_lastWaterEvent=millis();
-      
-    }
-  }else
-     {
-       if(seconds_between(current_sensorsvalues.cached_lastWaterEvent,millis())>totalNoIrrigationTime)
-    {
-      irrigating =true;
-      current_sensorsvalues.cached_lastWaterEvent=millis();
-    }
-   } 
+  int intervalTime=cicleLength/totalIrrigationTime;
+
+  if(time_between(time1,time2)<intervalTime-1)
+    irrigating= !irrigating;
   return irrigating;
-  
 } 
 /*
  * DRAW TIME SELECTION MENU
@@ -1520,94 +1496,6 @@ void static drawSelectStatus(State & state)
     }
     break;
   }
-  
-}
-
-void drawLightState(State &state)
-{
-  mylcd.setPosition(1,0);
-  if(tm.Hour<10) mylcd.print("0");
-  mylcd.print(tm.Hour);
-  mylcd.print(":");
-  if(tm.Minute<10) mylcd.print("0");
-  mylcd.print(tm.Minute);
-  mylcd.print("  ");
-  if(tm.Day<10) mylcd.print("0");
-  mylcd.print(tm.Day);
-  mylcd.print("/");
-  if(tm.Month<10) mylcd.print("0");
-  mylcd.print(tm.Month);
-  mylcd.print("/");
-  mylcd.print(tmYearToCalendar(tm.Year));
-  mylcd.setPosition(2,0);
-  mylcd.print(translate(S_START));
-  mylcd.setPosition(2,8);
-  if(state.light_startinghour<10) mylcd.print("0");
-  mylcd.print(state.light_startinghour);
-  mylcd.setPosition(2,10);
-  mylcd.print(":");
-  mylcd.setPosition(2,11);
-  if(state.light_startingminutes<10) mylcd.print("0");
-  mylcd.print(state.light_startingminutes);
-  mylcd.setPosition(3,0);
-  mylcd.print(translate(S_END));
-  mylcd.setPosition(3,4);
-  if(state.light_endinghour<10) mylcd.print("0");
-  mylcd.print(state.light_endinghour);
-  mylcd.setPosition(3,6);
-  mylcd.print(":");
-  mylcd.setPosition(3,7);
-  if(state.light_endingminutes<10) mylcd.print("0");
-  mylcd.print(state.light_endingminutes);
 }
 
 
-void drawLightSelectionStatus(State &state)
-{
-  mylcd.setPosition(1,0);
-  printTitle(mylcd,translate(S_EDITSTATE));
-  mylcd.setPosition(2,0);
-  mylcd.print(translate(S_START));
-  mylcd.setPosition(2,8);
-  if(state.light_startinghour<10)
-    mylcd.print("0");
-  mylcd.print(state.light_startinghour);
-  mylcd.setPosition(2,10);
-  mylcd.print(":");
-  mylcd.setPosition(2,11);
-  mylcd.print(state.light_startingminutes);
-  mylcd.setPosition(3,0);
-  mylcd.print(translate(S_END));
-  mylcd.setPosition(3,4);
-  if(state.light_endinghour<10)
-    mylcd.print("0");
-  mylcd.print(state.light_endinghour);
-  mylcd.setPosition(3,6);
-  mylcd.print(":");
-  mylcd.setPosition(3,7);
-    if(state.light_endingminutes<10)
-    mylcd.print("0");
-  mylcd.print(state.light_endingminutes);
-  switch(light_selectStatus){
-  case S_LSTART:
-    if(!isEditing){
-      mylcd.setPosition(2,6);
-      mylcd.boxCursorOn();
-    }
-    else{
-        mylcd.setPosition(2,8);
-        mylcd.underlineCursorOn();
-      }
-      break;
-   case S_LEND:
-   if(!isEditing){
-      mylcd.setPosition(3,3);
-      mylcd.boxCursorOn();
-    }
-    else{
-        mylcd.setPosition(3,5);
-        mylcd.underlineCursorOn();
-      }
-      break;
-  }
-}

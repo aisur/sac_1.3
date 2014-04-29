@@ -34,7 +34,6 @@
   enum RelayState {
     RELAY_OFF=0,
     RELAY_ON,
-    RELAY_WAITING
  };
 
 typedef struct _Relay Relay;
@@ -49,32 +48,26 @@ typedef struct _Relay Relay;
  
 
 
-void relay_on (Relay & rele)
+void relay_on (byte relayPin)
 {
   
 
-    rele.state=RELAY_ON;
-    digitalWrite(rele.gpio_pin, HIGH);
+
+    digitalWrite(relayPin, HIGH);
 
 }
 
 
 
-void relay_off (Relay & rele)
+void relay_off (byte relayPin)
 {
   
   
 
-   rele.state=RELAY_OFF;
-    digitalWrite(rele.gpio_pin, LOW);
+  digitalWrite(relayPin, LOW);
 
 }
 
-void relay_wait(Relay & rele)
-{
-   rele.state=RELAY_WAITING;
-    digitalWrite(rele.gpio_pin, LOW); 
-}
 enum Roles{
   R_DISCONNECTED=0,
   R_IRRIGATION,
