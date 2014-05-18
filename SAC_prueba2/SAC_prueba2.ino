@@ -1196,7 +1196,7 @@ void drawIrrigationState(State & state)
     mylcd.print("0");
   mylcd.print((int)state.temps_max);
   mylcd.print(" ");
-  mylcd.print(translate(MIN));
+  mylcd.print("MIN:");
   if(state.temps_min<10)
     mylcd.print("0");
   mylcd.print((int)state.temps_min);
@@ -1543,7 +1543,7 @@ void static drawSelectStatus(State & state)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MAX);
   mylcd.print(" ");
-  mylcd.print(translate(MIN));
+  mylcd.print("MIN:");
   if(state.moisture_MIN<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
@@ -1589,7 +1589,7 @@ void static drawSelectStatus(State & state)
     mylcd.print("0");
   mylcd.print((int)state.temps_max);
   mylcd.print(" ");
-  mylcd.print(translate(MIN));
+  mylcd.print("MIN:");
   if(state.temps_min<10)
     mylcd.print("0");
   mylcd.print((int)state.temps_min);
@@ -1678,7 +1678,7 @@ void drawHumidificationState(State & state)
     mylcd.print("HRO:");
     mylcd.print("68%");
     mylcd.print("  ");
-    mylcd.print("Rango:");
+    mylcd.print("MIN:");
     mylcd.print("-4");
     mylcd.print("%");
     mylcd.setPosition(3,0);

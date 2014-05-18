@@ -39,7 +39,7 @@ enum {
   S_DURATION,
 
   S_RANGE,
-  MIN,
+  
   ST_MAX,
   CONSUMPTION,
   CICLO,
@@ -94,7 +94,7 @@ TranslatedString string_db[]={
   {{"DURACION"}},
 
   {{" "  }},
-  {{"MIN:"}},
+
   {{"TSMAX:"}},
   {{"CONSUMO:"}},
   {{"CICLO:"}},
