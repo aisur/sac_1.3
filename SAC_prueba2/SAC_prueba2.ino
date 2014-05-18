@@ -71,8 +71,6 @@
 #define VERSION "1.3"
 
 
-
-
 /*
  * DIFFERENT STATES TO MOVE THROUGH MENU
  */
@@ -1413,7 +1411,7 @@ void drawEditingTime(byte currentTimeState)
 void drawCalibrationSat()
 {
   mylcd.setPosition(1,0);
-  printTitle(mylcd,translate(S_CALIBRATE_MOIST));
+  printTitle(mylcd,translate(S_SATCALIBRATION));
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_CURRENTVALUE));
   mylcd.print(F(": "));
@@ -1677,7 +1675,7 @@ void drawHumidificationState(State & state)
    mylcd.setPosition(1,0);
     printTitle(mylcd,"HUMIDIFICACION");
     mylcd.setPosition(2,0);
-    mylcd.print("HR:");
+    mylcd.print("HRO:");
     mylcd.print("68%");
     mylcd.print("  ");
     mylcd.print("Rango:");
