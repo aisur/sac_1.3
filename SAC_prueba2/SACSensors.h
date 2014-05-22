@@ -31,7 +31,7 @@ SACSensors: this file contains all the functions for use the sensors and use the
  * Current Version: 0.3.
 *************************************************************************/
 
-#define DS19S20_PIN A7
+#define DS19S20_PIN 13
 
 /*
  * MOISURE POWER PIN
@@ -49,6 +49,8 @@ SACSensors: this file contains all the functions for use the sensors and use the
 #define WTS_PIN A7
 #define WFL_PIN 6
 #define FC_PIN A2
+#define MOISTURE_SMOOTHING 85
+#define MOISTURE_CALIB 500
 volatile int NbTopsFan;
 int Calc;
 /**
@@ -183,13 +185,20 @@ float read_SoilTemp()
  * Read the Soil Moisture.
  * returns Soil Moisture in Percent.
  */
- int read_moisture(){
+ float read_moisture(int hs_calib){
    
   digitalWrite(SOIL_MOISTURE_POWER_PIN, HIGH);
   
-  int cached_moisture = analogRead(MOISTURE_PIN);
+  float cached_moisture = analogRead(MOISTURE_PIN);
   digitalWrite(SOIL_MOISTURE_POWER_PIN, LOW);
-  cached_moisture=  map(cached_moisture,0,100,0,100);
+  cached_moisture=  map(cached_moisture,0,hs_calib,0,99);
+  if(cached_moisture>=100)
+    cached_moisture=99;
+   static float kept=0;
+   float soil_moisture= cached_moisture *100/ MOISTURE_CALIB;
+   kept=(kept* MOISTURE_SMOOTHING/100.0);
+   kept=kept+soil_moisture*(100-MOISTURE_SMOOTHING)/100.0;
+   
   return cached_moisture;
  }
  /*
@@ -236,10 +245,8 @@ float getWaterFlowRate ()
 void update_State(cached_sensors & last_values,tmElements_t current_event,int FCapacityCalib)
 {
             
-            float curr_moisture=read_moisture();
+            float curr_moisture=read_moisture(FCapacityCalib);
 	    float curr_temps= read_SoilTemp();
-              if(curr_temps<-60)
-                curr_temps=22.0;
 	    float curr_flowrate=0.0;//getWaterFlowRate();
   
             last_values.cached_moisture=curr_moisture;

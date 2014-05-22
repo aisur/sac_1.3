@@ -11,7 +11,7 @@
  * SAC: This is the Main File of SAC Project:
  * http://saccultivo.com
  * 
- * IN this file we can see all the functions for the correct functionality of the SAC Unit for 1 Output Channel
+ * IN this file we can see all the functions for the correct functionality of the SAC Unit for 3 Output Channel
  * 
  * Author: Victor Suarez Garcia<suarez.garcia.victor@gmail.com>
  * Co-Author: David Cuevas Lopez<mr.cavern@gmail.com>
@@ -51,7 +51,7 @@
 #define LCD_PIN 11
 #define NUM_COLS 20
 #define NUM_ROWS 4
-#define MAXMENUITEMS 7
+#define MAXMENUITEMS 6
 #define magia(lcd,x) {  lcd.setPosition(1,0); lcd.print(x);delay(5000);}
 #define printTitle(lcd,m){lcd.print("***");lcd.print(m);lcd.print("***");}
 /*
@@ -65,10 +65,13 @@
 #define BUTTONDOWN 1
 #define BUTTONCENTER 2
 #define BUTTONCENTERLONG 3
-#define TIMEOUT 4
+#define BUTTONUPLONG 4
+#define BUTTONDOWLONG 5
+#define TIMEOUT 6
+
 #define IDLE -1
 
-#define VERSION "1.3"
+#define VERSION 1.3
 
 
 /*
@@ -140,8 +143,6 @@ typedef struct MenuItem
 };
 MenuItem main_menu[] ={
   {
-    S_LANGUAGE,IDIOMA        }
-  ,{
     S_DATE,FECHA        }
   ,
   {
@@ -203,6 +204,7 @@ byte button_up_state=LOW;
 byte button_down_state=LOW;
 byte button_center_state=LOW;
 byte center_pressed_state=0;
+byte up_pressed_state=0;
 byte selectionStatus=S_HSO;
 byte editHours;
 byte editMinutes;
@@ -323,17 +325,21 @@ int freeRam()
  *  3: button CENTER is Pressed more than 3 seconds.
  */
 int get_event(){
-  if(button_up_pressed()==HIGH) return BUTTONUP;
+  int event=IDLE;
+  event=button_up_pressed();
+  if(event!=IDLE){ return event;}
+  
   if(button_down_pressed()==HIGH) return BUTTONDOWN;
   time2=millis();
-  int event=button_center_pressed();
+   event=button_center_pressed();
   if(event>=0){
      time1=millis(); 
   }
-  if((time2-time1)>=10000){
+  if((time2-time1)>=30000){
     time1=millis();
     event= TIMEOUT;
   }
+  Serial.println(event);
   return event;
 
 }
@@ -346,15 +352,23 @@ int button_up_pressed()
 {
   byte current_state=digitalRead(BUTTON_UP_PIN);
 
-
-  if(button_up_state==HIGH && current_state==LOW){
-    button_up_state=current_state;
-    return HIGH;
+  if(current_state==HIGH){
+    if(up_pressed_state>=7 ){
+      up_pressed_state=0;
+    return BUTTONUPLONG;
+    }else{
+        up_pressed_state++;
+    }
+   
   }
   else{
-    button_up_state=current_state;
-    return LOW;
+   if(up_pressed_state<7 && up_pressed_state>0)
+   {
+   up_pressed_state=0;
+    return BUTTONUP;
+   }
   }
+  return IDLE;
 
 }
 /*
@@ -413,16 +427,18 @@ int button_center_pressed()
  */
 void handleEvent(int event)
 {
-  switch(current_mstate)
-  {
-  case ESTADO:
-    if(event==BUTTONCENTERLONG){
+   if(event==BUTTONCENTERLONG){
       //Clear LCD Screen
       mylcd.clear();
       current_mstate=SELECCION;
       current_menu=0; 
       actualizar_pantalla=true;
+      return;
     }
+  switch(current_mstate)
+  {
+  case ESTADO:
+   
     if(event==BUTTONCENTER)
     {
       mylcd.clear();
@@ -446,7 +462,7 @@ void handleEvent(int event)
 
     break;
   case EDICION:
-    handleEventRoleSelectStatus(event);
+    handleEventRoleEditionStatus(event);
     break;
    case ROLEMENU:
      if(event==BUTTONCENTER)
@@ -488,7 +504,16 @@ void handleEventRoleSelectStatus(int event)
     actualizar_pantalla=true;
   }
 }
-
+void handleEventRoleEditionStatus(int event)
+{
+   switch(relay[current_rele].role)
+  {
+   case R_IRRIGATION:
+      handleEventSelectStatus(event);
+   break;
+   
+  } 
+}
 void handleEventSelectStatus(int event)
 {
   if(event==BUTTONCENTER)
@@ -509,7 +534,7 @@ void handleEventSelectStatus(int event)
       selectionStatus=(selectionStatus<0)?5:selectionStatus%6;
       actualizar_pantalla=true;
     }
-
+     
     if(event==TIMEOUT)
     {
 
@@ -541,6 +566,11 @@ void handleEventSelectStatus(int event)
       }
       if(event==BUTTONUP){
         current_sensorsvalues.cached_maxmoisture--;
+        current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONUPLONG){
+        current_sensorsvalues.cached_maxmoisture-=10;
         current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
         actualizar_pantalla=true;
       }
@@ -1202,13 +1232,16 @@ void drawIrrigationState(State & state)
   mylcd.print((int)state.temps_min);
   mylcd.print(" ");
   int currenttemp=state.current_temps;
-  if(currenttemp<0){
-    mylcd.print("-"); 
+  if(currenttemp>=0){
+    mylcd.print("+"); 
+  }else{
+    if(currenttemp==-1000){mylcd.print("-");} 
   }
-  else{
-    mylcd.print("+");
-  }
+  if(currenttemp!=-1000){
   mylcd.print(currenttemp);
+  }else{
+   mylcd.print("--"); 
+  }
   mylcd.print("C");
   //Serial.println(line1);
 
@@ -1232,7 +1265,8 @@ void update_relay_state (void)
     case R_IRRIGATION:
       boolean relaystate=false;
       if(!current_state.field_capacity){
-      if (current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max)
+        
+      if (current_state.current_temps==-1000 ||(current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max))
       {
         if (current_state.current_moisture <= current_state.moisture_MIN )
         {
@@ -1595,13 +1629,17 @@ void static drawSelectStatus(State & state)
   mylcd.print((int)state.temps_min);
   mylcd.print(" ");
   int currenttemp=state.current_temps;
-  if(currenttemp<0){
-    mylcd.print("-"); 
+  if(currenttemp>=0){
+    mylcd.print("+"); 
+  }else{
+    if(currenttemp==-1000)
+       mylcd.print("-"); 
   }
-  else{
-    mylcd.print("+");
-  }
+  if(currenttemp!=-1000){
   mylcd.print(currenttemp);
+  }else{
+   mylcd.print("--"); 
+  }
   mylcd.print("C");
   mylcd.boxCursorOff();
   mylcd .underlineCursorOff();

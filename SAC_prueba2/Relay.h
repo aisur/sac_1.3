@@ -1,4 +1,4 @@
-/*
+R_IRRIGA/*
  * Relay.h: This file contains all the configuration for the relays and their states
  * and different roles.
  *
@@ -28,8 +28,8 @@
 #include "Arduino.h"
 
 #define MAX_RELAYS 3
-#define RELAY1_PIN 5
-#define RELAY2_PIN 6
+#define RELAY1_PIN 2
+#define RELAY2_PIN 3
 #define RELAY3_PIN 4
   enum RelayState {
     RELAY_OFF=0,
