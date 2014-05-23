@@ -1711,33 +1711,65 @@ void static drawSelectStatus(State & state)
 void drawHumidificationState(State & state)
 {
    mylcd.setPosition(1,0);
-    printTitle(mylcd,"HUMIDIFICACION");
+    printTitle(mylcd,translate(S_HUMIDIFIER));
     mylcd.setPosition(2,0);
-    mylcd.print("HRO:");
-    mylcd.print("68%");
-    mylcd.print("  ");
+    mylcd.print(translate(S_AIR_HUMIDITY));
+    mylcd.setPosition(2,4);
+    mylcd.print("68");
+    mylcd.setPosition(2,7);
+
     mylcd.print("MIN:");
-    mylcd.print("-4");
+    mylcd.setPosition(2,10);
+    mylcd.print("50");
+    mylcd.setPosition(2,12);
+    mylcd.print("[")
+    mylcd.print(state.current_airhumidity);
+    mylcd.print("]")
     mylcd.print("%");
+    
+    
     mylcd.setPosition(3,0);
     mylcd.print(translate(CICLO));
+    int minutes=state.cicle_length_seconds/60;
+    if(minutes<100)
+      mylcd.print("0");
+    if(minutes<10)
+     mylcd.print("0");
+    mylcd.print(minutes);
+    mylcd.print("'");
+    byte seconds= state.cicle_length_seconds%60;
+    if(seconds<10)
+    mylcd.print("0");
+    mylcd.print(seconds);
+    mylcd.print("''");
+    
+    
     mylcd.print("15',00''");
     mylcd.print("");
-    mylcd.print("ON");
+    mylcd.print(translate(S_ON));
     mylcd.print("100");
     mylcd.print("%");
     
     
 }
+void drawVentilationState(State & state)
+{
+  mylcd.setPosition(1,0);
+  printTitle(mylcd,translate(S_VENTILATION);
+  mylcd.setPosition(2,0);
+  mylcd.print(translate(S_AIR_HUMIDITY));
+  
+  
+}
 void drawLigthState(State & state)
 {
     mylcd.setPosition(1,0);
-    printTitle(mylcd,"LUZ");
+    printTitle(mylcd,translate(S_LIGHT));
     mylcd.setPosition(2,0);
-    mylcd.print("INICIO:");
-    mylcd.print("21:00");
+    mylcd.print(tranlate(S_ON));
+    mylcd.print("21:00H");
     mylcd.setPosition(3,0);
-    mylcd.print("FIN:");
-    mylcd.print("23:00");
+    mylcd.print(tranlate(S_OFF));
+    mylcd.print("23:00H");
 }
 

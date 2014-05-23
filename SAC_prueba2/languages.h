@@ -36,6 +36,7 @@ enum {
   S_RESET,
   S_ON,
   S_START,
+  S_OFF,
   S_DURATION,
 
   S_RANGE,
@@ -89,8 +90,9 @@ TranslatedString string_db[]={
 
   {{"SALIDAS"}},
   {{"RESET"}},
-  {{"ENCENDIDO"}},
-  {{"INICIO"}},
+  {{"ON:"}},
+  {{"INICIO:"}},
+  {{"OFF:"}},
   {{"DURACION"}},
 
   {{" "  }},
