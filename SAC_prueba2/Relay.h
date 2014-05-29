@@ -32,32 +32,18 @@
 #define RELAY2_PIN 3
 #define RELAY3_PIN 4
 
-<<<<<<< HEAD
-
-
-
-=======
   enum RelayState {
     RELAY_OFF=0,
     RELAY_ON,
  };
->>>>>>> FETCH_HEAD
 
 typedef struct _Relay Relay;
 
-
-  
   struct _Relay {
   byte gpio_pin;
   byte role;
   byte state;
  };
- 
-enum RelayState {
-    RELAY_OFF=0,
-    RELAY_ON,
- };
- 
  
 enum Roles{
   R_DISCONNECTED=0,
