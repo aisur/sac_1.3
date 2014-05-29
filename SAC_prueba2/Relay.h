@@ -32,9 +32,16 @@
 #define RELAY2_PIN 3
 #define RELAY3_PIN 4
 
+<<<<<<< HEAD
 
 
 
+=======
+  enum RelayState {
+    RELAY_OFF=0,
+    RELAY_ON,
+ };
+>>>>>>> FETCH_HEAD
 
 typedef struct _Relay Relay;
 
