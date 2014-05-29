@@ -88,6 +88,13 @@ typedef struct {
   int cached_cicle_length;
   tmElements_t cached_lastWaterEvent;//Last Time and Date for Pumping.
   byte cached_pump_percent;
+  float cached_airTAO;
+  float cached_airTMIN;
+  float cached_airHRO;
+  float cached_airHMIN;
+  float cached_airHumidity;
+  float cached_airTemperature;
+  float cached_airTMAX;
 } cached_sensors;
 /*
  * This Struct store all the information for the current state.
@@ -128,6 +135,13 @@ typedef struct {
 	float consumption;
         int cicle_length_seconds;
 	boolean field_capacity;
+        float airTAO;
+        float airTMIN;
+        float airTMAX;
+        float airHRO;
+        float airHMIN;
+        float current_airHumidity;
+        float current_airTemperature;
 
 }State;
 /**
@@ -234,6 +248,20 @@ float getWaterFlowRate ()
   return Calc;
   /*  Serial.print (Calc, DEC); //Prints the number calculated above*/
 }
+
+float readAirHumidity()
+{
+float airHumidity=0;
+return airHumidity;
+}
+
+float readAirTemperature()
+{
+  float airTemperature=0;
+  return airTemperature;
+  
+}
+
 /*
  *
  * update the sensors cache with the current state.
@@ -248,12 +276,17 @@ void update_State(cached_sensors & last_values,tmElements_t current_event,int FC
             float curr_moisture=read_moisture(FCapacityCalib);
 	    float curr_temps= read_SoilTemp();
 	    float curr_flowrate=0.0;//getWaterFlowRate();
-  
+            float curr_airHumidity = readAirHumidity();
+            float curr_airTemperature = readAirTemperature();
+    
             last_values.cached_moisture=curr_moisture;
 	    last_values.cached_temperature=curr_temps;
 	    last_values.cached_waterlevel = 0.0;//getWaterLevel(); // Boolean indicates if we have water or not.
 	    last_values.cached_flowvolume+=curr_flowrate/60000;//FlowRate(L/m) to FlowRate(m3/s).
 	    last_values.cached_fieldCapacity=readFieldCapacity(FCapacityCalib);
+            last_values.cached_airHumidity=curr_airHumidity;
+            last_values.cached_airTemperature=curr_airTemperature;
+
 }
 /*
 *
@@ -279,6 +312,15 @@ State read_sensors(cached_sensors & last_values)
 	current_state.temps_min=last_values.cached_tempmin;
 	current_state.field_capacity=last_values.cached_fieldCapacity;
         current_state.cicle_length_seconds=last_values.cached_cicle_length*60;
+        
+        current_state.airTAO=last_values.cached_airTAO;  //air temp and humidity 
+        current_state.airTMIN=last_values.cached_airTMIN;
+        current_state.airHRO=last_values.cached_airHRO;
+        current_state.airHMIN=last_values.cached_airHMIN;
+        current_state.current_airHumidity=last_values.cached_airHumidity;
+        current_state.current_airTemperature=last_values.cached_airTemperature;
+        current_state.airTMAX=last_values.cached_airTMAX;
+
 	return current_state; 
   
 }
@@ -295,6 +337,14 @@ cached_sensors initSensorsCache(){
    current_sensors.cached_tempmax=0;
    current_sensors.cached_minmoisture=0;
    current_sensors.cached_maxmoisture=0;
+   
+   current_sensors.cached_airTAO=0;   //air temp & humidity
+   current_sensors.cached_airTMIN=0;
+   current_sensors.cached_airHRO=0;
+   current_sensors.cached_airHMIN=0;
+   current_sensors.cached_airHumidity=0;
+   current_sensors.cached_airTemperature=0;
+   current_sensors.cached_airTMAX;
    return current_sensors;
 }
 int readFCapacityValue()
@@ -311,5 +361,9 @@ boolean state_changed(State state1,State state2)
    if(state1.current_moisture!= state2.current_moisture ) return true;
    if(state1.current_temps!= state2.current_temps ) return true;
    if(state1.field_capacity!= state2.field_capacity ) return true;
+   if(state1.current_airTemperature!=  state2.current_airTemperature) return true;
+   if(state1.current_airHumidity!=state2.current_airHumidity) return true;
    return false;
 }
+
+

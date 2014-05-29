@@ -27,6 +27,8 @@ enum {
   S_HUMIDIFIER,
   S_AIR_HUMIDITY,
   S_AIR_TEMPERATURE,
+  S_HUMIDIF,
+  S_REFRIG,
 
 
   S_RETURN_TO,
@@ -58,7 +60,11 @@ enum {
   S_ABOUT,
   S_SAC,
   S_EDITSTATE,
-  S_FC
+  S_FC,
+  S_MIN,
+  S_HS,
+  S_HR,
+  S_TA
 };
 
 #define MAX_LANGUAGE 1
@@ -83,6 +89,8 @@ TranslatedString string_db[]={
   {{"HUMIDIFICACION"}},
   {{"HRO"}},
   {{"TAO"}},
+  {{"HUMIDIF."}},
+  {{"REFRIG."}},
 
 
   {{"VOLVER"}},
@@ -114,7 +122,11 @@ TranslatedString string_db[]={
   {{"ACERCA DE"}},
   {{"DESARROLLO POR AISUR"}},
   {{"EDITAR ESTADO"}},
-  {{"CC"}}
+  {{"CC"}},
+  {{"MIN:"}},
+  {{"HS:"}},
+  {{"HR:"}},
+  {{"TA:"}}
 };
 
 

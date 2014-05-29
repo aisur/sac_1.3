@@ -1,4 +1,4 @@
-R_IRRIGA/*
+/*
  * Relay.h: This file contains all the configuration for the relays and their states
  * and different roles.
  *
@@ -31,10 +31,10 @@ R_IRRIGA/*
 #define RELAY1_PIN 2
 #define RELAY2_PIN 3
 #define RELAY3_PIN 4
-  enum RelayState {
-    RELAY_OFF=0,
-    RELAY_ON,
- };
+
+
+
+
 
 typedef struct _Relay Relay;
 
@@ -46,7 +46,21 @@ typedef struct _Relay Relay;
   byte state;
  };
  
-
+enum RelayState {
+    RELAY_OFF=0,
+    RELAY_ON,
+ };
+ 
+ 
+enum Roles{
+  R_DISCONNECTED=0,
+  R_IRRIGATION,
+  R_HUMIDIFIER,
+  R_VENTILATION,
+  R_HEATING,
+  R_COOLING,
+  R_LIGHT,
+};
 
 void relay_on (byte relayPin)
 {
@@ -68,15 +82,4 @@ void relay_off (byte relayPin)
 
 }
 
-enum Roles{
-  R_DISCONNECTED=0,
-  R_IRRIGATION,
-  R_HUMIDIFIER,
-  R_VENTILATION,
-  R_HEATING,
-  R_COOLING,
-  R_LIGHT,
 
-/*  S_ALARM,*/
-/*  S_ON*/
-};

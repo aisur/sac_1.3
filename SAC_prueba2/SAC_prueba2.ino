@@ -94,7 +94,6 @@ enum States
 enum Seleccion_States
 {
   MENU,
-  IDIOMA,
   FECHA,
   HORA,
   CALIBRACION_SAT,
@@ -187,9 +186,9 @@ Relay relay[MAX_RELAYS]={
   {
     RELAY1_PIN,R_IRRIGATION,RELAY_OFF     }
   ,{
-    RELAY2_PIN,R_DISCONNECTED,RELAY_OFF          }
+    RELAY2_PIN,R_HUMIDIFIER,RELAY_OFF          }
   ,{
-    RELAY3_PIN,R_DISCONNECTED,RELAY_OFF     }
+    RELAY3_PIN,R_COOLING,RELAY_OFF     }
 };
 /*
  * GLOBAL VARIABLES
@@ -227,7 +226,6 @@ void setup()
   actualizar_pantalla=true;
   // setupFlowRate();
 
-
   irrigating=false;
   current_selectionstate=MENU;
   if(!load_Settings(current_config)){
@@ -246,8 +244,12 @@ void initializeGlobalVars(){
   current_sensorsvalues.cached_tempmin=(current_config.temps_min!=0)?current_config.temps_min:8;
   current_sensorsvalues.cached_minmoisture=(current_config.moisture_min!=0)?current_config.moisture_min:30;
   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
- current_sensorsvalues.cached_cicle_length=(current_config.pump_cicle_length!=0)?current_config.pump_cicle_length:15;
- current_sensorsvalues.cached_pump_percent=(current_config.pump_percent!=0)?current_config.pump_percent:100;
+  current_sensorsvalues.cached_cicle_length=(current_config.pump_cicle_length!=0)?current_config.pump_cicle_length:15;
+  current_sensorsvalues.cached_pump_percent=(current_config.pump_percent!=0)?current_config.pump_percent:100;
+  current_sensorsvalues.cached_airTAO=(current_config.airTAO!=0)?current_config.airTAO:35;
+  current_sensorsvalues.cached_airHMIN=(current_config.airHMIN!=0)?current_config.airHMIN:25;
+  current_sensorsvalues.cached_airHRO=(current_config.airHRO!=0)?current_config.airHRO:75;
+  current_sensorsvalues.cached_airTMIN=(current_config.airTMIN!=0)?current_config.airTMIN:5;
   time1=millis();
 }
 /**
@@ -286,8 +288,6 @@ void loop(){
   }
   }
 
-
-
   int event=get_event();
  // magia(mylcd,freeRam());
 
@@ -295,28 +295,10 @@ void loop(){
   handleEvent(event);
   update_relay_state();
   drawUI(current_state);
-
-
-
-
-
-
-  //Serial.println(freeRam());
-
-
-
-
-  //LCD_Message(&mylcd,"",line2,"","Ultima Linea");
   delay(250);
 
-  // LCD_Clear(&mylcd);
 }
-int freeRam()
-{
-  extern int __heap_start, *__brkval;
-  int v;
-  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval);
-}
+
 /*Gets the current Button Event
  * returns: the button that is pressed.
  *  0: button UP is Pressed.
@@ -445,7 +427,6 @@ void handleEvent(int event)
       current_mstate=EDICION;
       actualizar_pantalla=true;
       selectionStatus=S_HSO;
-
     }
     if(event==TIMEOUT)
     {
@@ -453,7 +434,6 @@ void handleEvent(int event)
     current_mstate=ROLEMENU;
     mylcd.boxCursorOff();
     actualizar_pantalla=true;
-
     }
     break; 
   case SELECCION:
@@ -510,6 +490,12 @@ void handleEventRoleEditionStatus(int event)
   {
    case R_IRRIGATION:
       handleEventSelectStatus(event);
+   break;
+   case R_COOLING:
+      handleEventSelectCoolingStatus(event);
+   break;
+   case R_HUMIDIFIER:
+       handleEventSelectHumidifierStatus(event);
    break;
    
   } 
@@ -693,29 +679,7 @@ void handleEventSelection(int event)
       actualizar_pantalla=true;
     }
     break;
-  case IDIOMA:
-    if(event == BUTTONCENTER)
-    {
-      mylcd.clear();
-      active_language= select_language % MAX_LANGUAGE;
-      current_selectionstate=MENU;
-      actualizar_pantalla=true;
-      current_config.active_languaje=active_language;
-      store_Settings(current_config);
-    }
-    if(event== BUTTONUP)
-    {
-      select_language--;
-      select_language =(select_language<0)? 1:0;
-      actualizar_pantalla=true;            
-    }
-    if(event==BUTTONDOWN)
-    {
-      select_language++; 
-      select_language%=2;
-      actualizar_pantalla=true;
-    }
-    break;
+  
 
   case FECHA:
     if(isEditing)
@@ -1007,7 +971,7 @@ void drawState(State & state)
     drawHumidificationState(state);
     break;
    case 2:
-    drawLigthState(state);
+    drawCoolingState(state);
    break; 
   }
 }
@@ -1027,32 +991,13 @@ void drawSelectRoleMenu(State & state)
   mylcd.print(tm.Month);
   mylcd.print("/");
   mylcd.print(tmYearToCalendar(tm.Year));
-  
-  mylcd.setPosition(2,0);
-  mylcd.print("C1:");
-  mylcd.print(translate(S_IRRIGATION));
-  mylcd.print(" ");
-  mylcd.print("HS:");
-  if(state.current_moisture<10)
-      mylcd.print("0");
-  mylcd.print((int)state.current_moisture);
-  mylcd.print("%");
-  
-  //line3
-  mylcd.setPosition(3,0);
-  mylcd.print("C2:");
-  mylcd.print("HUMIDIFIC.");
-  mylcd.print(" ");
-  mylcd.print("HR:");
-  mylcd.print("00");
-  mylcd.print("%");
-  
-  //line4
-  mylcd.setPosition(4,0);
-  mylcd.print("C3:");
-  mylcd.print("LUZ:");
-  mylcd.print(" ");
-  mylcd.print("OFF");
+  for (int i=0; i<MAX_RELAYS;i++){
+   mylcd.setPosition(i+2,0);
+   mylcd.print("C");
+   mylcd.print(i+1);
+   mylcd.print(" ");
+   drawRoleInfo(relay[i].role,state);
+  }
   switch(current_rele)
  {
    case 0:
@@ -1069,6 +1014,29 @@ void drawSelectRoleMenu(State & state)
    break;
  } 
 }
+
+void drawRoleInfo(byte role, State & state){
+  switch (role){
+    case R_IRRIGATION:
+    mylcd.print(translate(S_IRRIGATION));
+    mylcd.print(" ");
+     mylcd.print(translate(S_HS));
+     mylcd.print(state.current_moisture);
+    break;
+    case R_COOLING:
+    mylcd.print(translate(S_REFRIG));
+    mylcd.print(" ");
+    mylcd.print(translate(S_TA));
+    mylcd.print(state.current_airTemperature);
+    break;
+    case R_HUMIDIFIER:
+    mylcd.print(translate(S_HUMIDIF));    
+    mylcd.print(" ");
+    mylcd.print(translate(S_HR));
+    mylcd.print(state.current_airHumidity);
+    break;
+  }
+}
 /*
  * DRAWS INTERFACE FOR THE DIFFERENT MENUS
  */
@@ -1079,9 +1047,6 @@ void drawSeleccion()
   {
   case MENU:
     drawMenu();
-    break;
-  case IDIOMA:
-    drawSelectLanguage();
     break;
   case FECHA:
     if(!isEditing)
@@ -1105,24 +1070,7 @@ void drawSeleccion()
 
 }
 
-/*
- * DRAWS LANGUAGE SELECTION MENU
- */
-void drawSelectLanguage()
-{
-  mylcd.setPosition(1,0);
-  printTitle(mylcd,translate(S_LANGUAGE));
-  mylcd.setPosition(2,0);
-  if(select_language==0)
-    mylcd.print("*");
-  mylcd.print(translate(S_ENGLISH));
-  mylcd.print(F(" "));
-  mylcd.setPosition(3,0);
-  if(select_language==1)
-    mylcd.print("*");
-  mylcd.print(translate(S_SPANOL));
-  mylcd.print(F(" "));
-}
+
 /*
  * DRAWS MENU
  */
@@ -1180,7 +1128,7 @@ void drawIrrigationState(State & state)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MAX);
   mylcd.print(" ");
-  mylcd.print(translate(MIN));
+  mylcd.print(translate(S_MIN));
   if(state.moisture_MIN<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
@@ -1226,7 +1174,7 @@ void drawIrrigationState(State & state)
     mylcd.print("0");
   mylcd.print((int)state.temps_max);
   mylcd.print(" ");
-  mylcd.print("MIN:");
+  mylcd.print(translate(S_MIN));
   if(state.temps_min<10)
     mylcd.print("0");
   mylcd.print((int)state.temps_min);
@@ -1256,14 +1204,14 @@ void drawIrrigationState(State & state)
 void update_relay_state (void)
 {
   byte i;
-
+  boolean relaystate=false;
   for (i=0; i < MAX_RELAYS; i++){
 
 
     Relay rele = relay[i];
     switch (rele.role){
     case R_IRRIGATION:
-      boolean relaystate=false;
+     relaystate=false;
       if(!current_state.field_capacity){
         
       if (current_state.current_temps==-1000 ||(current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max))
@@ -1272,10 +1220,7 @@ void update_relay_state (void)
         {
 
 
-
-
           relaystate=true;
-
 
         }
         else{
@@ -1286,6 +1231,47 @@ void update_relay_state (void)
         }
       }
      }
+     break;
+     case R_HUMIDIFIER:
+      
+      if (current_state.current_airHumidity <= current_state.airHMIN)        
+      {       
+          relaystate=true;
+       }  
+       else{
+         if(rele.state==RELAY_ON && current_state.current_airHumidity < current_state.airHRO)
+         {
+           relaystate=true;
+         }
+       }
+ 
+      if(relaystate)
+      {
+        rele.state=RELAY_ON;
+        relay_on(relay[i].gpio_pin);
+      }
+      else
+      {
+        rele.state=RELAY_OFF;
+        relay_off(rele.gpio_pin);
+
+      }
+      relay[i]=rele;
+      break;
+    
+    case R_COOLING:
+      
+      if (current_state.current_airTemperature > current_state.airTMAX)        
+      {       
+          relaystate=true;
+       }  
+       else{
+         if(rele.state==RELAY_ON && current_state.current_airTemperature < current_state.airTAO)
+         {
+           relaystate=true;
+         }
+       }
+ 
       if(relaystate)
       {
         rele.state=RELAY_ON;
@@ -1300,9 +1286,9 @@ void update_relay_state (void)
       relay[i]=rele;
       break;
     }
-
   }
-}
+   }
+
 
 /*
  * CHECK IRRIGATION CICLE DURATION.
@@ -1492,7 +1478,7 @@ void drawEditingDate(byte currentDateState)
     data=editMonths;
     break;
   case YEAR:
-    title=S_EDITDAY;
+    title=S_EDITYEAR;
     data=editYears;
     break;
   }
@@ -1538,33 +1524,13 @@ void static drawRoleMenu(State & state)
   mylcd.print(tm.Month);
   mylcd.print("/");
   mylcd.print(tmYearToCalendar(tm.Year));
-  
-  mylcd.setPosition(2,0);
-  mylcd.print("C1:");
-  mylcd.print(translate(S_IRRIGATION));
-  mylcd.print(" ");
-  mylcd.print("HS:");
-  if(state.current_moisture<10)
-      mylcd.print("0");
-  mylcd.print((int)state.current_moisture);
-  mylcd.print("%");
-  mylcd.print(" ");
-  
-  //line3
-  mylcd.setPosition(3,0);
-  mylcd.print("C2:");
-  mylcd.print("HUMIDIFIC.");
-  mylcd.print(" ");
-  mylcd.print("HR:");
-  mylcd.print("00");
-  mylcd.print("%");
-  
-  //line4
-  mylcd.setPosition(4,0);
-  mylcd.print("C3:");
-  mylcd.print("LUZ:");
-  mylcd.print(" ");
-  mylcd.print("OFF");
+   for (int i=0; i<MAX_RELAYS;i++){
+   mylcd.setPosition(i+2,0);
+   mylcd.print("C");
+   mylcd.print(i+1);
+   mylcd.print(" ");
+   drawRoleInfo(relay[i].role,state);
+  }
 }
 void static drawSelectStatus(State & state)
 {
@@ -1642,7 +1608,7 @@ void static drawSelectStatus(State & state)
   }
   mylcd.print("C");
   mylcd.boxCursorOff();
-  mylcd .underlineCursorOff();
+  mylcd.underlineCursorOff();
   switch(selectionStatus)
   {
   case S_HSO:
@@ -1715,18 +1681,21 @@ void drawHumidificationState(State & state)
     mylcd.setPosition(2,0);
     mylcd.print(translate(S_AIR_HUMIDITY));
     mylcd.setPosition(2,4);
-    mylcd.print("68");
+    
+    float airHRO = state.airHRO;
+      
+    mylcd.print(airHRO);
     mylcd.setPosition(2,7);
 
-    mylcd.print("MIN:");
+    mylcd.print(translate(S_MIN));
     mylcd.setPosition(2,10);
-    mylcd.print("50");
+    float airHMIN = state.airHMIN;
+    mylcd.print(airHMIN);
     mylcd.setPosition(2,12);
-    mylcd.print("[")
-    mylcd.print(state.current_airhumidity);
-    mylcd.print("]")
+    mylcd.print("[");
+    mylcd.print((float)state.current_airHumidity);
+    mylcd.print("]");
     mylcd.print("%");
-    
     
     mylcd.setPosition(3,0);
     mylcd.print(translate(CICLO));
@@ -1742,8 +1711,6 @@ void drawHumidificationState(State & state)
     mylcd.print("0");
     mylcd.print(seconds);
     mylcd.print("''");
-    
-    
     mylcd.print("15',00''");
     mylcd.print("");
     mylcd.print(translate(S_ON));
@@ -1752,12 +1719,12 @@ void drawHumidificationState(State & state)
     
     
 }
-void drawVentilationState(State & state)
+void drawCoolingState(State & state)
 {
   mylcd.setPosition(1,0);
-  printTitle(mylcd,translate(S_VENTILATION);
+  printTitle(mylcd,translate(S_VENTILATION));
   mylcd.setPosition(2,0);
-  mylcd.print(translate(S_AIR_HUMIDITY));
+  mylcd.print(translate(S_AIR_TEMPERATURE));
   
   
 }
@@ -1766,10 +1733,15 @@ void drawLigthState(State & state)
     mylcd.setPosition(1,0);
     printTitle(mylcd,translate(S_LIGHT));
     mylcd.setPosition(2,0);
-    mylcd.print(tranlate(S_ON));
+    mylcd.print(translate(S_ON));
     mylcd.print("21:00H");
     mylcd.setPosition(3,0);
-    mylcd.print(tranlate(S_OFF));
+    mylcd.print(translate(S_OFF));
     mylcd.print("23:00H");
 }
 
+
+void handleEventSelectCoolingStatus(int event){
+}
+void handleEventSelectHumidifierStatus(int event){
+}
