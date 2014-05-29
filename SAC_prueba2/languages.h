@@ -58,7 +58,8 @@ enum {
   S_ABOUT,
   S_SAC,
   S_EDITSTATE,
-  S_FC
+  S_FC,
+  S_MIN
 };
 
 #define MAX_LANGUAGE 1
@@ -114,7 +115,8 @@ TranslatedString string_db[]={
   {{"ACERCA DE"}},
   {{"DESARROLLO POR AISUR"}},
   {{"EDITAR ESTADO"}},
-  {{"CC"}}
+  {{"CC"}},
+  {{"MIN"}}
 };
 
 

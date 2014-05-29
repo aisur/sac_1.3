@@ -1180,7 +1180,7 @@ void drawIrrigationState(State & state)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MAX);
   mylcd.print(" ");
-  mylcd.print(translate(MIN));
+  mylcd.print(translate(S_MIN));
   if(state.moisture_MIN<10)
     mylcd.print("0");
   mylcd.print((int)state.moisture_MIN);
