@@ -61,14 +61,10 @@ enum {
   S_SAC,
   S_EDITSTATE,
   S_FC,
-<<<<<<< HEAD
   S_MIN,
   S_HS,
   S_HR,
   S_TA
-=======
-  S_MIN
->>>>>>> FETCH_HEAD
 };
 
 #define MAX_LANGUAGE 1
@@ -127,14 +123,10 @@ TranslatedString string_db[]={
   {{"DESARROLLO POR AISUR"}},
   {{"EDITAR ESTADO"}},
   {{"CC"}},
-<<<<<<< HEAD
   {{"MIN:"}},
   {{"HS:"}},
   {{"HR:"}},
   {{"TA:"}}
-=======
-  {{"MIN"}}
->>>>>>> FETCH_HEAD
 };
 
 
