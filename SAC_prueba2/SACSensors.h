@@ -145,8 +145,8 @@ typedef struct {
         float airTMAX;
         float airHRO;
         float airHMIN;
-        float current_airHumidity;
-        float current_airTemperature;
+        int current_airHumidity;
+        int current_airTemperature;
 
 }State;
 /**
@@ -239,31 +239,18 @@ float read_SoilTemp()
    attachInterrupt(0,npm,RISING);
  }
  
- void npm()
-{
-  NbTopsFan++;
-}
-float getWaterFlowRate ()
-{
-    
-  sei();      //Enables interrupts
-  delay (1000);   //Wait 1 second
-  cli();      //Disable interrupts
-  Calc = (NbTopsFan * 7 / 60); //(Pulse frequency x 60) / 7Q, = flow rate in L/min
-  return Calc;
-  /*  Serial.print (Calc, DEC); //Prints the number calculated above*/
-}
+ 
 
-float readAirHumidity()
+int readAirHumidity()
 {
 float airHumidity=ahts_sensor.readHumidity();
-return airHumidity;
+return (int)airHumidity;
 }
 
-float readAirTemperature()
+int readAirTemperature()
 {
   float airTemperature=ahts_sensor.readTemperatureC();
-  return airTemperature;
+  return (int)airTemperature;
   
 }
 

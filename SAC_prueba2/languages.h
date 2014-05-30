@@ -64,7 +64,8 @@ enum {
   S_MIN,
   S_HS,
   S_HR,
-  S_TA
+  S_TA,
+  S_TAMAX
 };
 
 #define MAX_LANGUAGE 1
@@ -126,7 +127,8 @@ TranslatedString string_db[]={
   {{"MIN:"}},
   {{"HS:"}},
   {{"HR:"}},
-  {{"TA:"}}
+  {{"TA:"}},
+  {{"TAMAX:"}}
 };
 
 
