@@ -1,5 +1,7 @@
+#include <SHT1x.h>
 #include <Time.h>
 #include <OneWire.h>
+
 
 /****************************************************************
 SACSensors: this file contains all the functions for use the sensors and use the sensor cache. 
@@ -49,10 +51,13 @@ SACSensors: this file contains all the functions for use the sensors and use the
 #define WTS_PIN A7
 #define WFL_PIN 6
 #define FC_PIN A2
+#define AHT_DATAPIN A0
+#define AHT_CLOCKPIN A1
 #define MOISTURE_SMOOTHING 85
 #define MOISTURE_CALIB 500
 volatile int NbTopsFan;
 int Calc;
+SHT1x ahts_sensor(AHT_DATAPIN,AHT_CLOCKPIN);
 /**
 * Read the field capacity in function of the previous calibration.
 * Parameters:
@@ -251,13 +256,13 @@ float getWaterFlowRate ()
 
 float readAirHumidity()
 {
-float airHumidity=0;
+float airHumidity=ahts_sensor.readHumidity();
 return airHumidity;
 }
 
 float readAirTemperature()
 {
-  float airTemperature=0;
+  float airTemperature=ahts_sensor.readTemperatureC();
   return airTemperature;
   
 }

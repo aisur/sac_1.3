@@ -1,9 +1,11 @@
+#include <SHT1x.h>
 #include <SoftwareSerial.h>
 #include <SerLCD.h>
 #include <EEPROM.h>
 #include <OneWire.h>
 #include <DS1307RTC.h>
 #include <Wire.h>
+
 #include <Time.h>
 #include <time.h>
 
@@ -960,17 +962,22 @@ void drawUI(State & state){
   }
 
 }
+/*Draw The Current State Role
+ * Parameters:
+ * state: The struct with the Current State.
+ */
 void drawState(State & state)
 {
-  switch(current_rele)
+  byte role= relay[current_rele].role;
+  switch(role)
   {
-    case 0:
+    case R_IRRIGATION:
      drawIrrigationState(state);
     break;
-    case 1:
+    case R_HUMIDIFIER:
     drawHumidificationState(state);
     break;
-   case 2:
+   case R_COOLING:
     drawCoolingState(state);
    break; 
   }
