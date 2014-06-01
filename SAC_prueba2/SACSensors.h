@@ -348,13 +348,13 @@ int readFCapacityValue()
   
   return cached_fc;
 }
-boolean state_changed(State state1,State state2)
+boolean state_changed(State state1,State state2,byte relayCount)
 {
    if(state1.current_moisture!= state2.current_moisture ) return true;
    if(state1.current_temps!= state2.current_temps ) return true;
    if(state1.field_capacity!= state2.field_capacity ) return true;
-   if(state1.current_airTemperature!=  state2.current_airTemperature) return true;
-   if(state1.current_airHumidity!=state2.current_airHumidity) return true;
+   if(relayCount>1 && state1.current_airTemperature!=  state2.current_airTemperature) return true;
+   if(relayCount>1 && state1.current_airHumidity!=state2.current_airHumidity) return true;
    return false;
 }
 

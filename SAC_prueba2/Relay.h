@@ -27,7 +27,7 @@
 
 #include "Arduino.h"
 
-#define MAX_RELAYS 3
+#define MAX_RELAYS 1
 #define RELAY1_PIN 2
 #define RELAY2_PIN 3
 #define RELAY3_PIN 4

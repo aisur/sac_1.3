@@ -187,10 +187,7 @@ State previous_state;
 Relay relay[MAX_RELAYS]={
   {
     RELAY1_PIN,R_IRRIGATION,RELAY_OFF     }
-  ,{
-    RELAY2_PIN,R_HUMIDIFIER,RELAY_OFF          }
-  ,{
-    RELAY3_PIN,R_COOLING,RELAY_OFF     }
+ 
 };
 /*
  * GLOBAL VARIABLES
@@ -235,7 +232,10 @@ void setup()
     current_mstate=SELECCION;
   }
   else{
+    if(MAX_RELAYS>1)
     current_mstate=ROLEMENU; 
+    else
+    current_mstate=ESTADO;
   }
   initializeGlobalVars();
 }
@@ -280,7 +280,7 @@ void loop(){
   update_State(current_sensorsvalues,tm,current_config.calib_FCapacity);
   current_state=read_sensors(current_sensorsvalues);
   if(current_mstate==ESTADO|| current_mstate==ROLEMENU){
-  if(state_changed(current_state,previous_state) || time_between(lastUpdate,tm)>1){
+  if(state_changed(current_state,previous_state,MAX_RELAYS) || time_between(lastUpdate,tm)>1){
     actualizar_pantalla=true; 
     previous_state=current_state;
     lastUpdate=tm;
@@ -313,7 +313,7 @@ int get_event(){
   event=button_up_pressed();
   if(event!=IDLE){ return event;}
   
-  if(button_down_pressed()==HIGH) return BUTTONDOWN;
+  if(button_down_pressed()==HIGH){time1=millis(); return BUTTONDOWN;}
   time2=millis();
    event=button_center_pressed();
   if(event>=0){
@@ -430,7 +430,7 @@ void handleEvent(int event)
       actualizar_pantalla=true;
       selectionStatus=S_HSO;
     }
-    if(event==TIMEOUT)
+    if(event==TIMEOUT && MAX_RELAYS>1)
     {
     mylcd.clear();
     current_mstate=ROLEMENU;
@@ -483,7 +483,7 @@ void handleEventRoleSelectStatus(int event)
   }
   if(event==TIMEOUT)
   {
-    current_mstate=ROLEMENU;
+    current_mstate=(MAX_RELAYS>1)?ROLEMENU:ESTADO;
     mylcd.boxCursorOff();
     actualizar_pantalla=true;
   }
@@ -510,6 +510,7 @@ void handleEventSelectStatus(int event)
   {
     isEditing=!isEditing;
     actualizar_pantalla=true; 
+    return;
   }
   if(!isEditing){
     if(event==BUTTONDOWN)
@@ -559,11 +560,7 @@ void handleEventSelectStatus(int event)
         current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
         actualizar_pantalla=true;
       }
-      if(event==BUTTONUPLONG){
-        current_sensorsvalues.cached_maxmoisture-=10;
-        current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
-        actualizar_pantalla=true;
-      }
+     
       break;
     case S_HSMIN:
       if(event==BUTTONDOWN){
@@ -1110,10 +1107,14 @@ void drawMenu()
  */
 void drawIrrigationState(State & state)
 {
+  if(MAX_RELAYS>1){
   mylcd.print("C");
   mylcd.print(current_rele+1);
   mylcd.print(":");
   drawRoleTitle(current_rele);
+ }else{
+   drawCTime(); 
+  }
   if(state.field_capacity)
   { mylcd.print(" ");
     mylcd.print(translate(S_FC));
@@ -1511,7 +1512,18 @@ void static drawAbout()
 } 
 void static drawRoleMenu(State & state)
 {
-  mylcd.setPosition(1,0);
+   drawCTime();
+   for (int i=0; i<MAX_RELAYS;i++){
+   mylcd.setPosition(i+2,0);
+   mylcd.print("C");
+   mylcd.print(i+1);
+   mylcd.print(" ");
+   drawRoleInfo(relay[i].role,state);
+  }
+}
+void static drawCTime()
+{
+ mylcd.setPosition(1,0);
   if(tm.Hour<10) mylcd.print("0");
   mylcd.print(tm.Hour);
   mylcd.print(":");
@@ -1524,14 +1536,7 @@ void static drawRoleMenu(State & state)
   if(tm.Month<10) mylcd.print("0");
   mylcd.print(tm.Month);
   mylcd.print("/");
-  mylcd.print(tmYearToCalendar(tm.Year));
-   for (int i=0; i<MAX_RELAYS;i++){
-   mylcd.setPosition(i+2,0);
-   mylcd.print("C");
-   mylcd.print(i+1);
-   mylcd.print(" ");
-   drawRoleInfo(relay[i].role,state);
-  }
+  mylcd.print(tmYearToCalendar(tm.Year)); 
 }
 void static drawSelectStatus(State & state)
 {
