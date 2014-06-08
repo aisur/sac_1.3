@@ -1231,7 +1231,22 @@ void update_relay_state (void)
           }
         }
       }
+      
+     }else{
+        relaystate=false; 
      }
+      if(relaystate)
+      {
+        rele.state=RELAY_ON;
+        relay_on(relay[i].gpio_pin);
+      }
+      else
+      {
+        rele.state=RELAY_OFF;
+        relay_off(rele.gpio_pin);
+
+      }
+      relay[i]=rele;
      break;
      case R_HUMIDIFIER:
       
