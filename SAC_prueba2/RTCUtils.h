@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include <Time.h>
 #include <stdlib.h>
-#include <time.h>
+
 double getMinutesBetween(tmElements_t time1,tmElements_t time2);
 
 /*

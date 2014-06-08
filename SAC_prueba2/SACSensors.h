@@ -1,7 +1,6 @@
-#include <SHT1x.h>
+
 #include <Time.h>
 #include <OneWire.h>
-
 
 /****************************************************************
 SACSensors: this file contains all the functions for use the sensors and use the sensor cache. 
@@ -53,11 +52,14 @@ SACSensors: this file contains all the functions for use the sensors and use the
 #define FC_PIN A2
 #define AHT_DATAPIN A0
 #define AHT_CLOCKPIN A1
+
 #define MOISTURE_SMOOTHING 85
 #define MOISTURE_CALIB 500
+
+
+
 volatile int NbTopsFan;
 int Calc;
-SHT1x ahts_sensor(AHT_DATAPIN,AHT_CLOCKPIN);
 /**
 * Read the field capacity in function of the previous calibration.
 * Parameters:
@@ -83,23 +85,19 @@ typedef struct {
   float cached_humidity;//Last Air Humidity
   int cached_waterlevel;//Last WaterLevel
   float cached_flowvolume; //Water Flow
-  float cached_tempmin;//Last Minimum Temperature
-  float cached_tempmax;//Last Maximum Temperature
-  float cached_moisture;//Last Soil Moisture
-  float cached_minmoisture;//Last Minimum Temperature
-  float cached_maxmoisture;//Last Maximum Temperature
+  int cached_tempmin;//Last Minimum Temperature
+  int cached_tempmax;//Last Maximum Temperature
+  int cached_moisture;//Last Soil Moisture
+  int cached_minmoisture;//Last Minimum Temperature
+  int cached_maxmoisture;//Last Maximum Temperature
   int cached_waterFlowdiameter;//Water Flow Diameter
   boolean cached_fieldCapacity;//last result for the field capacity
   int cached_cicle_length;
   tmElements_t cached_lastWaterEvent;//Last Time and Date for Pumping.
-  byte cached_pump_percent;
-  float cached_airTAO;
-  float cached_airTMIN;
-  float cached_airHRO;
-  float cached_airHMIN;
-  float cached_airHumidity;
-  float cached_airTemperature;
-  float cached_airTMAX;
+  int cached_pump_percent;
+  int cached_pump_cicle_seconds;
+  
+
 } cached_sensors;
 /*
  * This Struct store all the information for the current state.
@@ -140,15 +138,15 @@ typedef struct {
 	float consumption;
         int cicle_length_seconds;
 	boolean field_capacity;
-        float airTAO;
-        float airTMIN;
-        float airTMAX;
-        float airHRO;
-        float airHMIN;
-        int current_airHumidity;
-        int current_airTemperature;
+        
 
 }State;
+
+
+enum Interval_state{
+  I_CONTINOUS=0,
+  I_INTERVAL
+};
 /**
  *
  *read the Soilt Temperature
@@ -220,6 +218,12 @@ float read_SoilTemp()
    
   return cached_moisture;
  }
+ 
+ 
+
+
+ 
+ 
  /*
  *
  * Read the WaterLevel Tank
@@ -239,20 +243,23 @@ float read_SoilTemp()
    attachInterrupt(0,npm,RISING);
  }
  
- 
-
-int readAirHumidity()
+ void npm()
 {
-float airHumidity=ahts_sensor.readHumidity();
-return (int)airHumidity;
+  NbTopsFan++;
+}
+float getWaterFlowRate ()
+{
+    
+  sei();      //Enables interrupts
+  delay (1000);   //Wait 1 second
+  cli();      //Disable interrupts
+  Calc = (NbTopsFan * 7 / 60); //(Pulse frequency x 60) / 7Q, = flow rate in L/min
+  return Calc;
+  /*  Serial.print (Calc, DEC); //Prints the number calculated above*/
 }
 
-int readAirTemperature()
-{
-  float airTemperature=ahts_sensor.readTemperatureC();
-  return (int)airTemperature;
-  
-}
+
+
 
 /*
  *
@@ -262,22 +269,40 @@ int readAirTemperature()
  * tmElements: current Time.
  * fcCapacityCalib: field Capacity calibration.
  */
-void update_State(cached_sensors & last_values,tmElements_t current_event,int FCapacityCalib)
+
+void update_State(cached_sensors & last_values,tmElements_t current_event,int FCapacityCalib,byte mode,long lastInterval, boolean& cerrojo_intervalo, long& IntervalTime)
 {
+            float curr_moisture;
             
-            float curr_moisture=read_moisture(FCapacityCalib);
-	    float curr_temps= read_SoilTemp();
-	    float curr_flowrate=0.0;//getWaterFlowRate();
-            float curr_airHumidity = readAirHumidity();
-            float curr_airTemperature = readAirTemperature();
-    
+            if( mode==I_INTERVAL){         
+            long time_aux=millis();
+
+            if(cerrojo_intervalo==HIGH ){
+            curr_moisture=read_moisture(FCapacityCalib);
             last_values.cached_moisture=curr_moisture;
+            cerrojo_intervalo=LOW;
+            IntervalTime=millis();
+            }
+            if(cerrojo_intervalo==LOW && ( time_aux - IntervalTime>=15000*60)){
+            cerrojo_intervalo=HIGH;
+            } 
+            }          
+            if(mode==I_CONTINOUS){
+            curr_moisture=read_moisture(FCapacityCalib);
+            last_values.cached_moisture=curr_moisture;
+            }
+            
+	    float curr_temps= read_SoilTemp();
+            
+            
+	    float curr_flowrate=0.0;//getWaterFlowRate();
+    
+    
+            
 	    last_values.cached_temperature=curr_temps;
 	    last_values.cached_waterlevel = 0.0;//getWaterLevel(); // Boolean indicates if we have water or not.
 	    last_values.cached_flowvolume+=curr_flowrate/60000;//FlowRate(L/m) to FlowRate(m3/s).
 	    last_values.cached_fieldCapacity=readFieldCapacity(FCapacityCalib);
-            last_values.cached_airHumidity=curr_airHumidity;
-            last_values.cached_airTemperature=curr_airTemperature;
 
 }
 /*
@@ -305,14 +330,8 @@ State read_sensors(cached_sensors & last_values)
 	current_state.field_capacity=last_values.cached_fieldCapacity;
         current_state.cicle_length_seconds=last_values.cached_cicle_length*60;
         
-        current_state.airTAO=last_values.cached_airTAO;  //air temp and humidity 
-        current_state.airTMIN=last_values.cached_airTMIN;
-        current_state.airHRO=last_values.cached_airHRO;
-        current_state.airHMIN=last_values.cached_airHMIN;
-        current_state.current_airHumidity=last_values.cached_airHumidity;
-        current_state.current_airTemperature=last_values.cached_airTemperature;
-        current_state.airTMAX=last_values.cached_airTMAX;
-
+        
+       
 	return current_state; 
   
 }
@@ -330,13 +349,7 @@ cached_sensors initSensorsCache(){
    current_sensors.cached_minmoisture=0;
    current_sensors.cached_maxmoisture=0;
    
-   current_sensors.cached_airTAO=0;   //air temp & humidity
-   current_sensors.cached_airTMIN=0;
-   current_sensors.cached_airHRO=0;
-   current_sensors.cached_airHMIN=0;
-   current_sensors.cached_airHumidity=0;
-   current_sensors.cached_airTemperature=0;
-   current_sensors.cached_airTMAX;
+
    return current_sensors;
 }
 int readFCapacityValue()
@@ -348,13 +361,12 @@ int readFCapacityValue()
   
   return cached_fc;
 }
-boolean state_changed(State state1,State state2,byte relayCount)
+boolean state_changed(State state1,State state2)
 {
    if(state1.current_moisture!= state2.current_moisture ) return true;
    if(state1.current_temps!= state2.current_temps ) return true;
    if(state1.field_capacity!= state2.field_capacity ) return true;
-   if(relayCount>1 && state1.current_airTemperature!=  state2.current_airTemperature) return true;
-   if(relayCount>1 && state1.current_airHumidity!=state2.current_airHumidity) return true;
+ 
    return false;
 }
 

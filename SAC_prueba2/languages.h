@@ -14,21 +14,10 @@ int active_language=1;
 enum {
   S_S=0,
   S_PU,
-  S_LANGUAGE,
-  S_ENGLISH,
   S_TIME,
   S_SOIL_MOISTURE,
   S_DISCONNECTED,
   S_IRRIGATION,
-  S_HEATING,
-  S_COOLING,
-  S_LIGHT,
-  S_VENTILATION,
-  S_HUMIDIFIER,
-  S_AIR_HUMIDITY,
-  S_AIR_TEMPERATURE,
-  S_HUMIDIF,
-  S_REFRIG,
 
 
   S_RETURN_TO,
@@ -63,9 +52,6 @@ enum {
   S_FC,
   S_MIN,
   S_HS,
-  S_HR,
-  S_TA,
-  S_TAMAX
 };
 
 #define MAX_LANGUAGE 1
@@ -77,21 +63,10 @@ TranslatedString string_db[]={
   /* for languages missing translations, english will be used instead */
   {{"HSO:"}},
   {{"RIEGO"}},
-  {{"IDIOMA"}},
-  {{"INGLES"}},
   {{"HORA"}},
   {{"HUMEDAD SUELO"}},
   {{"APAGADO"}},
   {{"RIEGO"}},
-  {{"CALEFACCION",}},
-  {{"REFRIGERACION"}},
-  {{"ILUMINACION"}},
-  {{"DESHUMIDIFICACION"}},
-  {{"HUMIDIFICACION"}},
-  {{"HRO"}},
-  {{"TAO"}},
-  {{"HUMIDIF."}},
-  {{"REFRIG."}},
 
 
   {{"VOLVER"}},
@@ -126,9 +101,6 @@ TranslatedString string_db[]={
   {{"CC"}},
   {{"MIN:"}},
   {{"HS:"}},
-  {{"HR:"}},
-  {{"TA:"}},
-  {{"TAMAX:"}}
 };
 
 

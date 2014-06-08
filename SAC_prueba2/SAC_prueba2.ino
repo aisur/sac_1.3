@@ -1,13 +1,12 @@
-#include <SHT1x.h>
 #include <SoftwareSerial.h>
 #include <SerLCD.h>
 #include <EEPROM.h>
 #include <OneWire.h>
 #include <DS1307RTC.h>
 #include <Wire.h>
-
 #include <Time.h>
-#include <time.h>
+
+
 
 /****************************************************************
  * SAC: This is the Main File of SAC Project:
@@ -41,7 +40,7 @@
  *************************************************************************/
 
 
-#include "LCDUtils.h"
+
 #include "RTCUtils.h"
 #include "EEPROMUtils.h"
 #include "languages.h"
@@ -73,6 +72,8 @@
 
 #define IDLE -1
 
+#define TOTALTIMEOUTTIME 10000
+
 #define VERSION 1.3
 
 
@@ -82,13 +83,11 @@
 enum States
 {
   INICIO,
-  SELECTIDIOMA,
   CALIB_SAT,
   ESTADO,
   EDICION,
   SELECCION,
-  ROLEMENU,
-  ROLESELECT
+
 };
 /*
  * DIFFERENT STATES IN SELECTION MODE
@@ -129,11 +128,12 @@ enum s_selectStatus
   S_HSO=0,
   S_HSMIN,
   S_PCICLE,
+  S_PCICLESECONDS,
   S_PINTERVAL,
   S_TSMAX,
-  S_TSMIN,
-
+  
 };
+
 /*
  * MENU STRUCTURE 
  */
@@ -144,19 +144,19 @@ typedef struct MenuItem
 };
 MenuItem main_menu[] ={
   {
-    S_DATE,FECHA        }
+    S_DATE,FECHA          }
   ,
   {
-    S_HOUR,HORA        }
+    S_HOUR,HORA          }
   ,{
-    S_SATCALIBRATION,CALIBRACION_SAT        }
+    S_SATCALIBRATION,CALIBRACION_SAT          }
   ,
   {
-    S_RESET,RESET_CONFIG        }
+    S_RESET,RESET_CONFIG          }
   ,{
-    S_ABOUT,ABOUT    }
+    S_ABOUT,ABOUT      }
   ,{
-    S_RETURN_TO,END_SELECTION        }
+    S_RETURN_TO,END_SELECTION          }
 
 };
 
@@ -186,8 +186,7 @@ State previous_state;
 
 Relay relay[MAX_RELAYS]={
   {
-    RELAY1_PIN,R_IRRIGATION,RELAY_OFF     }
- 
+    RELAY1_PIN,R_IRRIGATION,RELAY_OFF       }
 };
 /*
  * GLOBAL VARIABLES
@@ -203,16 +202,31 @@ byte button_down_state=LOW;
 byte button_center_state=LOW;
 byte center_pressed_state=0;
 byte up_pressed_state=0;
-byte selectionStatus=S_HSO;
+int selectionStatus=S_HSO;
 byte editHours;
 byte editMinutes;
 byte editDays;
 byte editMonths;
-byte current_rele=0;
+byte interval_mode=I_INTERVAL;
+int current_rele=0;
 int editYears;
 boolean isEditing;
 long time1;
 long time2;
+
+long time1I;
+long time2I;
+long time3I;
+long IntervalTime;
+long lastEvent;
+
+
+
+boolean cerrojo_up=1;
+boolean cerrojo_center=1;
+boolean cerrojo_down=1;
+
+boolean cerrojo_intervalo=HIGH;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
 
@@ -232,10 +246,7 @@ void setup()
     current_mstate=SELECCION;
   }
   else{
-    if(MAX_RELAYS>1)
-    current_mstate=ROLEMENU; 
-    else
-    current_mstate=ESTADO;
+    current_mstate=ESTADO; 
   }
   initializeGlobalVars();
 }
@@ -248,10 +259,7 @@ void initializeGlobalVars(){
   current_sensorsvalues.cached_maxmoisture=(current_config.moisture_target!=0)?current_config.moisture_target:70;
   current_sensorsvalues.cached_cicle_length=(current_config.pump_cicle_length!=0)?current_config.pump_cicle_length:15;
   current_sensorsvalues.cached_pump_percent=(current_config.pump_percent!=0)?current_config.pump_percent:100;
-  current_sensorsvalues.cached_airTAO=(current_config.airTAO!=0)?current_config.airTAO:35;
-  current_sensorsvalues.cached_airHMIN=(current_config.airHMIN!=0)?current_config.airHMIN:25;
-  current_sensorsvalues.cached_airHRO=(current_config.airHRO!=0)?current_config.airHRO:75;
-  current_sensorsvalues.cached_airTMIN=(current_config.airTMIN!=0)?current_config.airTMIN:5;
+  current_sensorsvalues.cached_pump_cicle_seconds=(current_config.pump_cicle_seconds!=0)?current_config.pump_cicle_seconds:0;
   time1=millis();
 }
 /**
@@ -268,36 +276,35 @@ void setup_pins(){
     pinMode(relay[i].gpio_pin,OUTPUT);
 
   }
-
+  current_config.interval_time=15;
   isEditing=false;
 }
 void loop(){
-
-
   RTCread(tm);
 
   //ALWAYS UPDATE SCREEN WHEN STATE CHANGES
-  update_State(current_sensorsvalues,tm,current_config.calib_FCapacity);
+  update_State(current_sensorsvalues,tm,current_config.calib_FCapacity,interval_mode, current_config.interval_time, cerrojo_intervalo, IntervalTime);
   current_state=read_sensors(current_sensorsvalues);
-  if(current_mstate==ESTADO|| current_mstate==ROLEMENU){
-  if(state_changed(current_state,previous_state,MAX_RELAYS) || time_between(lastUpdate,tm)>1){
-    actualizar_pantalla=true; 
-    previous_state=current_state;
-    lastUpdate=tm;
-  }
-  else{
-    actualizar_pantalla=false; 
-  }
+  if(current_mstate==ESTADO){
+    if(state_changed(current_state,previous_state) || time_between(lastUpdate,tm)>1){
+      actualizar_pantalla=true; 
+      previous_state=current_state;
+      lastUpdate=tm;
+    }
+    else{
+      actualizar_pantalla=false; 
+    }
   }
 
+
+  drawUI(current_state);
   int event=get_event();
- // magia(mylcd,freeRam());
+
 
 
   handleEvent(event);
   update_relay_state();
-  drawUI(current_state);
-  delay(250);
+  
 
 }
 
@@ -311,15 +318,23 @@ void loop(){
 int get_event(){
   int event=IDLE;
   event=button_up_pressed();
-  if(event!=IDLE){ return event;}
-  
-  if(button_down_pressed()==HIGH){time1=millis(); return BUTTONDOWN;}
-  time2=millis();
-   event=button_center_pressed();
-  if(event>=0){
-     time1=millis(); 
+
+  if(event!=IDLE){  
+  //  Serial.println(event); 
+    return event;
   }
-  if((time2-time1)>=30000){
+  event=button_down_pressed();
+  //Serial.println(event);
+  if(event!=IDLE){ 
+   // Serial.println(event); 
+    return event;
+  }
+  time2=millis();
+  event=button_center_pressed();
+  if(event>=0){
+    time1=millis(); 
+  }
+  if((time2-time1)>=TOTALTIMEOUTTIME){
     time1=millis();
     event= TIMEOUT;
   }
@@ -332,29 +347,35 @@ int get_event(){
  * when button is pressed.
  returns HIGH when button Up is released or LOW otherwise.
  */
+
 int button_up_pressed()
 {
   byte current_state=digitalRead(BUTTON_UP_PIN);
 
-  if(current_state==HIGH){
-    if(up_pressed_state>=7 ){
-      up_pressed_state=0;
-    return BUTTONUPLONG;
-    }else{
-        up_pressed_state++;
-    }
-   
-  }
-  else{
-   if(up_pressed_state<7 && up_pressed_state>0)
-   {
-   up_pressed_state=0;
+  if(current_state==HIGH && cerrojo_up==1)
+  {  
+    cerrojo_up=0;
+    time1I=millis();
     return BUTTONUP;
-   }
+  }
+  if(current_state==LOW && cerrojo_up==0)
+  {
+    cerrojo_up=1;
+    time1I=millis();
+  }
+
+  if(current_state==HIGH && cerrojo_up==0){
+    long TIME_UP=millis();
+    if( (TIME_UP- time1I) >= 3000){
+
+      return BUTTONUPLONG;
+    }
   }
   return IDLE;
 
 }
+
+
 /*
 * check if button down is pressed. The Event only ocurrs when the Button is released. NOt when
  * the button is Pressed.
@@ -362,17 +383,27 @@ int button_up_pressed()
  */
 int button_down_pressed()
 {
-  byte current_state=digitalRead(BUTTON_DOWN_PIN);
+  boolean current_state=digitalRead(BUTTON_DOWN_PIN);
 
 
-  if(button_down_state==HIGH && current_state==LOW){
-    button_down_state=current_state;
-    return HIGH;
+  if(current_state==HIGH && cerrojo_down==1){
+    time3I=millis();
+    cerrojo_down=0;
+    return BUTTONDOWN;
   }
-  else{
-    button_down_state=current_state;
-    return LOW;
+
+  if(current_state==LOW && cerrojo_down==0 ){
+    cerrojo_down=1;   
   }
+
+  if(current_state==HIGH && cerrojo_down==0){
+    long TIME_UP=millis();
+    if( (TIME_UP- time3I) >= 3000){
+
+      return BUTTONDOWLONG;
+    }
+  }
+  return IDLE;
 }
 /*
 * check if button center is pressed with two states. When is pressed minor than 3 secods or if its pressed
@@ -382,23 +413,27 @@ int button_down_pressed()
  */
 int button_center_pressed()
 {
-  byte current_state=digitalRead(BUTTON_CENTER_PIN);
+  boolean current_state=digitalRead(BUTTON_CENTER_PIN);
 
-  if(current_state==HIGH){
-    if(center_pressed_state>=7 ){
-      center_pressed_state=0;
-    return BUTTONCENTERLONG;
-    }else{
-        center_pressed_state++;
-    }
-   
-  }
-  else{
-   if(center_pressed_state<7 && center_pressed_state>0)
-   {
-   center_pressed_state=0;
+  if(current_state==HIGH && cerrojo_center ==1)
+  {  
+    cerrojo_center=0;
+    time2I=millis();
     return BUTTONCENTER;
-   }
+  }
+  if(current_state==LOW && cerrojo_center==0)
+  {
+    cerrojo_center=1;
+    time2I=millis();
+
+  }
+
+  if(current_state==HIGH && cerrojo_center==0){
+    long TIME_center=millis();
+    if(TIME_center-time2I>= 3000){
+      time2I=millis();
+      return BUTTONCENTERLONG;
+    }
   }
   return IDLE;
 
@@ -411,18 +446,20 @@ int button_center_pressed()
  */
 void handleEvent(int event)
 {
-   if(event==BUTTONCENTERLONG){
-      //Clear LCD Screen
-      mylcd.clear();
-      current_mstate=SELECCION;
-      current_menu=0; 
-      actualizar_pantalla=true;
-      return;
-    }
+  if(event==BUTTONCENTERLONG){
+    //Clear LCD Screen
+    mylcd.clear();
+    current_mstate=SELECCION;
+    current_menu=0; 
+    actualizar_pantalla=true;
+    mylcd.underlineCursorOff();
+    mylcd.boxCursorOff();
+    return;
+  }
   switch(current_mstate)
   {
   case ESTADO:
-   
+
     if(event==BUTTONCENTER)
     {
       mylcd.clear();
@@ -430,13 +467,7 @@ void handleEvent(int event)
       actualizar_pantalla=true;
       selectionStatus=S_HSO;
     }
-    if(event==TIMEOUT && MAX_RELAYS>1)
-    {
-    mylcd.clear();
-    current_mstate=ROLEMENU;
-    mylcd.boxCursorOff();
-    actualizar_pantalla=true;
-    }
+
     break; 
   case SELECCION:
 
@@ -444,64 +475,22 @@ void handleEvent(int event)
 
     break;
   case EDICION:
-
     handleEventRoleEditionStatus(event);
-    
     break;
-   case ROLEMENU:
-     if(event==BUTTONCENTER)
-       {
-         current_mstate=ROLESELECT;
-         actualizar_pantalla=true;
-       }
-   break;
-   case ROLESELECT:
-   handleEventRoleSelectStatus(event);
-   break;
+
+
   }
 }
-void handleEventRoleSelectStatus(int event)
-{
-  if(event==BUTTONDOWN)
-  {
-    current_rele++;
-    current_rele%=3;
-    actualizar_pantalla=true;
-  }
-  if(event==BUTTONUP)
-  {
-    current_rele--;
-    current_rele=(current_rele<0)? 2:current_rele;
-    actualizar_pantalla=true;
-  }
-  if(event==BUTTONCENTER)
-  {
-    current_mstate=ESTADO;
-    actualizar_pantalla=true;
-    mylcd.boxCursorOff();
-    mylcd.clear(); 
-  }
-  if(event==TIMEOUT)
-  {
-    current_mstate=(MAX_RELAYS>1)?ROLEMENU:ESTADO;
-    mylcd.boxCursorOff();
-    actualizar_pantalla=true;
-  }
-}
+
 void handleEventRoleEditionStatus(int event)
 {
-   switch(relay[current_rele].role)
+  switch(relay[current_rele].role)
   {
-   case R_IRRIGATION:
-      handleEventSelectStatus(event);
-   break;
-   case R_COOLING:
-      handleEventSelectCoolingStatus(event);
-   break;
-   case R_HUMIDIFIER:
-       handleEventSelectHumidifierStatus(event);
-   break;
-   
+  case R_IRRIGATION:
+    handleEventSelectStatus(event);
+    break;
+
+
   } 
 }
 void handleEventSelectStatus(int event)
@@ -510,22 +499,25 @@ void handleEventSelectStatus(int event)
   {
     isEditing=!isEditing;
     actualizar_pantalla=true; 
-    return;
   }
   if(!isEditing){
     if(event==BUTTONDOWN)
     {
-      selectionStatus++;
-      selectionStatus%=6;
+      selectionStatus--;
+      if(selectionStatus<0){
+        selectionStatus=5;
+      }
       actualizar_pantalla=true;
     } 
     if(event==BUTTONUP)
     {
-      selectionStatus--;
-      selectionStatus=(selectionStatus<0)?5:selectionStatus%6;
+      selectionStatus++;
+      if(selectionStatus>5){
+        selectionStatus=0;
+      }
       actualizar_pantalla=true;
     }
-     
+
     if(event==TIMEOUT)
     {
 
@@ -541,6 +533,7 @@ void handleEventSelectStatus(int event)
       current_config.temps_min=current_sensorsvalues.cached_tempmin;
       current_config.pump_cicle_length=current_sensorsvalues.cached_cicle_length;
       current_config.pump_percent=current_sensorsvalues.cached_pump_percent;
+      current_config.pump_cicle_seconds=current_sensorsvalues.cached_pump_cicle_seconds;
       store_Settings(current_config);
     }
 
@@ -551,84 +544,193 @@ void handleEventSelectStatus(int event)
     {
     case S_HSO:
       if(event==BUTTONDOWN){
-        current_sensorsvalues.cached_maxmoisture++;
-        current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
+        current_sensorsvalues.cached_maxmoisture--;
+        if(current_sensorsvalues.cached_maxmoisture<current_sensorsvalues.cached_minmoisture){
+          current_sensorsvalues.cached_maxmoisture=99;
+        }
+
+
+
         actualizar_pantalla=true;
       }
       if(event==BUTTONUP){
-        current_sensorsvalues.cached_maxmoisture--;
-        current_sensorsvalues.cached_maxmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_maxmoisture)?current_sensorsvalues.cached_minmoisture:(int)current_sensorsvalues.cached_maxmoisture%100;
+        current_sensorsvalues.cached_maxmoisture++;
+        if(current_sensorsvalues.cached_maxmoisture>99){
+          current_sensorsvalues.cached_maxmoisture=current_sensorsvalues.cached_minmoisture;
+        }
+
+
         actualizar_pantalla=true;
       }
-     
+      if(event==BUTTONUPLONG){
+        current_sensorsvalues.cached_maxmoisture+=10;
+        if(current_sensorsvalues.cached_maxmoisture>99){
+          current_sensorsvalues.cached_maxmoisture=current_sensorsvalues.cached_minmoisture;
+        }
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWLONG){
+        current_sensorsvalues.cached_maxmoisture-=10;
+        if(current_sensorsvalues.cached_maxmoisture<00){
+          current_sensorsvalues.cached_maxmoisture=99;
+        }
+
+
+        actualizar_pantalla=true;
+      }
       break;
     case S_HSMIN:
       if(event==BUTTONDOWN){
-        current_sensorsvalues.cached_minmoisture++;
-        current_sensorsvalues.cached_minmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_maxmoisture:(int)current_sensorsvalues.cached_minmoisture%100;
+        current_sensorsvalues.cached_minmoisture--;
+        if(current_sensorsvalues.cached_minmoisture<0){
+          current_sensorsvalues.cached_minmoisture=100;
+        }
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWLONG){
+        current_sensorsvalues.cached_minmoisture-=10;
+        if(current_sensorsvalues.cached_minmoisture<0){
+          current_sensorsvalues.cached_minmoisture=100;
+        }
         actualizar_pantalla=true;
       }
       if(event==BUTTONUP){
-        current_sensorsvalues.cached_minmoisture--;
-        current_sensorsvalues.cached_minmoisture=(current_sensorsvalues.cached_maxmoisture<=current_sensorsvalues.cached_minmoisture)?current_sensorsvalues.cached_maxmoisture:(int)current_sensorsvalues.cached_minmoisture%100;
+        current_sensorsvalues.cached_minmoisture++;
+        if(current_sensorsvalues.cached_minmoisture>99){
+          current_sensorsvalues.cached_minmoisture=0;
+        }       
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONUPLONG){
+        current_sensorsvalues.cached_minmoisture+=10;
+        if(current_sensorsvalues.cached_minmoisture>99){
+          current_sensorsvalues.cached_minmoisture=0;
+        }       
         actualizar_pantalla=true;
       }
       break;
     case S_PCICLE:
-        if(event==BUTTONDOWN)
-        {
-          current_sensorsvalues.cached_cicle_length++;
-          current_sensorsvalues.cached_cicle_length=(current_sensorsvalues.cached_cicle_length>=300)?0:current_sensorsvalues.cached_cicle_length;
-          actualizar_pantalla=true;
+      if(event==BUTTONDOWN)
+      {
+        current_sensorsvalues.cached_cicle_length--;
+        if(current_sensorsvalues.cached_cicle_length<0){
+          current_sensorsvalues.cached_cicle_length=120;
         }
-        if(event==BUTTONUP)
-        {
-          current_sensorsvalues.cached_cicle_length--;
-          current_sensorsvalues.cached_cicle_length=(current_sensorsvalues.cached_cicle_length<0)?300:current_sensorsvalues.cached_cicle_length;
-          actualizar_pantalla=true;
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONUP)
+      {
+        current_sensorsvalues.cached_cicle_length++;
+        if(current_sensorsvalues.cached_cicle_length>120){
+          current_sensorsvalues.cached_cicle_length=0;
         }
+        actualizar_pantalla=true;  
+      }  
+      if(event==BUTTONDOWLONG){
+        current_sensorsvalues.cached_cicle_length-=10;
+        if(current_sensorsvalues.cached_cicle_length<0){
+          current_sensorsvalues.cached_cicle_length=120;
+        }   
+
+        actualizar_pantalla=true;
+      }  
+
       break;
     case S_PINTERVAL:
       if(event==BUTTONDOWN)
       {
-         current_sensorsvalues.cached_pump_percent++;
-         current_sensorsvalues.cached_pump_percent=(current_sensorsvalues.cached_pump_percent>100)?0:current_sensorsvalues.cached_pump_percent;
-         actualizar_pantalla=true;
+        current_sensorsvalues.cached_pump_percent--;
+        if(current_sensorsvalues.cached_pump_percent<0){
+          current_sensorsvalues.cached_pump_percent=100;
+        }   
+        actualizar_pantalla=true;
       }
       if(event==BUTTONUP)
       {
-         current_sensorsvalues.cached_pump_percent--;
-         current_sensorsvalues.cached_pump_percent=(current_sensorsvalues.cached_pump_percent>100)?100:current_sensorsvalues.cached_pump_percent;
-         actualizar_pantalla=true;
+        current_sensorsvalues.cached_pump_percent++;
+        if(current_sensorsvalues.cached_pump_percent>100){
+          current_sensorsvalues.cached_pump_percent=0;
+        }   
+        actualizar_pantalla=true;  
+      }
+      if(event==BUTTONUPLONG){
+        current_sensorsvalues.cached_pump_percent+=10;
+        if(current_sensorsvalues.cached_pump_percent>100){
+          current_sensorsvalues.cached_pump_percent=0;
+        }       
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWLONG){
+        current_sensorsvalues.cached_pump_percent-=10;
+        if(current_sensorsvalues.cached_pump_percent<0){
+          current_sensorsvalues.cached_pump_percent=100;
+        }       
+        actualizar_pantalla=true;
       }
       break;
+      
     case S_TSMAX:
       if(event==BUTTONUP){
-        current_sensorsvalues.cached_tempmax--;
-        current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax<=current_sensorsvalues.cached_tempmin)?current_sensorsvalues.cached_tempmin:(int)current_sensorsvalues.cached_tempmax%100;
-        actualizar_pantalla=true;
-      }
-      if(event==BUTTONDOWN){
         current_sensorsvalues.cached_tempmax++;
-        current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax<=current_sensorsvalues.cached_tempmin)?current_sensorsvalues.cached_tempmin:(int)current_sensorsvalues.cached_tempmax%100;
-        actualizar_pantalla=true;
-      }
-      break;
-    case S_TSMIN:
-      if(event==BUTTONUP){
-        current_sensorsvalues.cached_tempmax--;
-        current_sensorsvalues.cached_tempmax=(current_sensorsvalues.cached_tempmax>=current_sensorsvalues.cached_tempmax)?current_sensorsvalues.cached_tempmax:(int)current_sensorsvalues.cached_tempmin%100;
+        if(current_sensorsvalues.cached_tempmax>55){
+          current_sensorsvalues.cached_tempmax=0;
+        } 
         actualizar_pantalla=true;
       }
       if(event==BUTTONDOWN){
-        current_sensorsvalues.cached_tempmin++;
-        current_sensorsvalues.cached_tempmin=(current_sensorsvalues.cached_tempmin>=current_sensorsvalues.cached_tempmax)?current_sensorsvalues.cached_tempmax:(int)current_sensorsvalues.cached_tempmin%100;
+        current_sensorsvalues.cached_tempmax--;
+        if(current_sensorsvalues.cached_tempmax<0){
+          current_sensorsvalues.cached_tempmax=55;
+        } 
         actualizar_pantalla=true;
       }
-      break;
-    default:
+      if(event==BUTTONUPLONG){
+        current_sensorsvalues.cached_tempmax+=10;
+        if(current_sensorsvalues.cached_tempmax>55){
+          current_sensorsvalues.cached_tempmax=0;
+        }           
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWLONG){
+        current_sensorsvalues.cached_tempmax-=10;
+        if(current_sensorsvalues.cached_tempmax<0){
+          current_sensorsvalues.cached_tempmax=50;
+        }           
+        actualizar_pantalla=true;
+      }      
 
       break;
+   case S_PCICLESECONDS:
+  if(event==BUTTONUP){
+        current_sensorsvalues.cached_pump_cicle_seconds++;
+        if(current_sensorsvalues.cached_pump_cicle_seconds>59){
+          current_sensorsvalues.cached_pump_cicle_seconds=0;
+        } 
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWN){
+        current_sensorsvalues.cached_pump_cicle_seconds--;
+        if(current_sensorsvalues.cached_pump_cicle_seconds<0){
+          current_sensorsvalues.cached_pump_cicle_seconds=59;
+        } 
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONUPLONG){
+        current_sensorsvalues.cached_pump_cicle_seconds+=10;
+        if(current_sensorsvalues.cached_pump_cicle_seconds>59){
+          current_sensorsvalues.cached_pump_cicle_seconds=0;
+        }           
+        actualizar_pantalla=true;
+      }
+      if(event==BUTTONDOWLONG){
+        current_sensorsvalues.cached_pump_cicle_seconds-=10;
+        if(current_sensorsvalues.cached_pump_cicle_seconds<0){
+          current_sensorsvalues.cached_pump_cicle_seconds=59;
+        }           
+        actualizar_pantalla=true;
+      }
+    
+  break;
     }
   }
 
@@ -680,7 +782,7 @@ void handleEventSelection(int event)
       actualizar_pantalla=true;
     }
     break;
-  
+
 
   case FECHA:
     if(isEditing)
@@ -702,8 +804,12 @@ void handleEventSelection(int event)
       current_config.calib_FCapacity=calib;
       store_Settings(current_config);
       current_selectionstate=MENU;
+      interval_mode=I_INTERVAL;
       mylcd.clear();
+    }else{
+     interval_mode=I_CONTINOUS;
     }
+    
     actualizar_pantalla=true;
     break;
   case RESET_CONFIG:
@@ -949,103 +1055,24 @@ void drawUI(State & state){
     case EDICION:
       drawSelectStatus(state);
       break;
-    case ROLEMENU:
-     drawRoleMenu(state);
 
-     break;
-     case ROLESELECT:
-     drawSelectRoleMenu(state);
-     break;
     }
     actualizar_pantalla=false;
   }
 
 }
-/*Draw The Current State Role
- * Parameters:
- * state: The struct with the Current State.
- */
 void drawState(State & state)
 {
-  byte role= relay[current_rele].role;
-  switch(role)
-  {
-    case R_IRRIGATION:
-     drawIrrigationState(state);
-    break;
-    case R_HUMIDIFIER:
-    drawHumidificationState(state);
-    break;
-   case R_COOLING:
-    drawCoolingState(state);
-   break; 
-  }
-}
-void drawSelectRoleMenu(State & state)
-{
-  mylcd.setPosition(1,0);
-  if(tm.Hour<10) mylcd.print("0");
-  mylcd.print(tm.Hour);
-  mylcd.print(":");
-  if(tm.Minute<10) mylcd.print("0");
-  mylcd.print(tm.Minute);
-  mylcd.print("  ");
-  if(tm.Day<10) mylcd.print("0");
-  mylcd.print(tm.Day);
-  mylcd.print("/");
-  if(tm.Month<10) mylcd.print("0");
-  mylcd.print(tm.Month);
-  mylcd.print("/");
-  mylcd.print(tmYearToCalendar(tm.Year));
-  for (int i=0; i<MAX_RELAYS;i++){
-   mylcd.setPosition(i+2,0);
-   mylcd.print("C");
-   mylcd.print(i+1);
-   mylcd.print(" ");
-   drawRoleInfo(relay[i].role,state);
-  }
   switch(current_rele)
- {
-   case 0:
-     mylcd.setPosition(2,1);
-     mylcd.boxCursorOn();
-   break;
-   case 1:
-     mylcd.setPosition(3,1);
-     mylcd.boxCursorOn();
-   break;
-   case 2:
-    mylcd.setPosition(4,1);
-     mylcd.boxCursorOn();
-   break;
- } 
+  {
+  case 0:
+    drawIrrigationState(state);
+    break;
+  }
 }
 
-void drawRoleInfo(byte role, State & state){
-  switch (role){
-    case R_IRRIGATION:
-    mylcd.print(translate(S_IRRIGATION));
-    mylcd.print(" ");
-    mylcd.print(translate(S_HS));
-    mylcd.print(state.current_moisture);
-    mylcd.print("%");
-    break;
-    case R_COOLING:
-    mylcd.print(translate(S_REFRIG));
-    mylcd.print(" ");
-    mylcd.print(translate(S_TA));
-    mylcd.print(state.current_airTemperature);
-    mylcd.print("C");
-    break;
-    case R_HUMIDIFIER:
-    mylcd.print(translate(S_HUMIDIF));    
-    mylcd.print(" ");
-    mylcd.print(translate(S_HR));
-    mylcd.print(state.current_airHumidity);
-    mylcd.print("%");
-    break;
-  }
-}
+
+
 /*
  * DRAWS INTERFACE FOR THE DIFFERENT MENUS
  */
@@ -1107,21 +1134,29 @@ void drawMenu()
  */
 void drawIrrigationState(State & state)
 {
-  if(MAX_RELAYS>1){
-  mylcd.print("C");
-  mylcd.print(current_rele+1);
+  //Line1
+  mylcd.setPosition(1,0);
+  if(tm.Hour<10) mylcd.print("0");
+  mylcd.print(tm.Hour);
   mylcd.print(":");
-  drawRoleTitle(current_rele);
- }else{
-   drawCTime(); 
-  }
+  if(tm.Minute<10) mylcd.print("0");
+  mylcd.print(tm.Minute);
+  mylcd.print("  ");
+  if(tm.Day<10) mylcd.print("0");
+  mylcd.print(tm.Day);
+  mylcd.print("/");
+  if(tm.Month<10) mylcd.print("0");
+  mylcd.print(tm.Month);
+  mylcd.print("/");
+  mylcd.print(tmYearToCalendar(tm.Year));
   if(state.field_capacity)
-  { mylcd.print(" ");
+  { 
+    mylcd.print(" ");
     mylcd.print(translate(S_FC));
   }
   else
   {
-   mylcd.print("   "); 
+    mylcd.print("   "); 
   }
   //Line2
   mylcd.setPosition(2,0);
@@ -1153,18 +1188,18 @@ void drawIrrigationState(State & state)
   if(minutes<100)
     mylcd.print("0");
   if(minutes<10)
-   mylcd.print("0");
+    mylcd.print("0");
   mylcd.print(minutes);
   mylcd.print("'");
-  byte seconds= state.cicle_length_seconds%60;
+byte seconds= current_sensorsvalues.cached_pump_cicle_seconds;
   if(seconds<10)
     mylcd.print("0");
   mylcd.print(seconds);
   mylcd.print("''");
   mylcd.print("ON");
   if(current_sensorsvalues.cached_pump_percent<100)
-   mylcd.print("0");
-   if(current_sensorsvalues.cached_pump_percent<10)
+    mylcd.print("0");
+  if(current_sensorsvalues.cached_pump_percent<10)
     mylcd.print("0");
   mylcd.print(current_sensorsvalues.cached_pump_percent);
   mylcd.print("%");
@@ -1176,21 +1211,20 @@ void drawIrrigationState(State & state)
     mylcd.print("0");
   mylcd.print((int)state.temps_max);
   mylcd.print(" ");
-  mylcd.print(translate(S_MIN));
-  if(state.temps_min<10)
-    mylcd.print("0");
-  mylcd.print((int)state.temps_min);
-  mylcd.print(" ");
   int currenttemp=state.current_temps;
   if(currenttemp>=0){
     mylcd.print("+"); 
-  }else{
-    if(currenttemp==-1000){mylcd.print("-");} 
+  }
+  else{
+    if(currenttemp==-1000){
+      mylcd.print("-");
+    } 
   }
   if(currenttemp!=-1000){
-  mylcd.print(currenttemp);
-  }else{
-   mylcd.print("--"); 
+    mylcd.print(currenttemp);
+  }
+  else{
+    mylcd.print("--"); 
   }
   mylcd.print("C");
   //Serial.println(line1);
@@ -1213,83 +1247,74 @@ void update_relay_state (void)
     Relay rele = relay[i];
     switch (rele.role){
     case R_IRRIGATION:
-     relaystate=false;
+      relaystate=false;
       if(!current_state.field_capacity){
-        
-      if (current_state.current_temps==-1000 ||(current_state.current_temps > current_state.temps_min && current_state.current_temps < current_state.temps_max))
-      {
-        if (current_state.current_moisture <= current_state.moisture_MIN )
+
+        if (current_state.current_temps==-1000 ||( current_state.current_temps < current_state.temps_max))
         {
-
-
-          relaystate=true;
-
-        }
-        else{
-          if (rele.state==RELAY_ON && current_state.current_moisture <= current_state.moisture_MAX )
+          if (rele.state==RELAY_OFF && current_state.current_moisture <= current_state.moisture_MIN )
           {
+
+            rele.state=RELAY_ON;
             relaystate=true;
+            //Serial.print("PRUEBA");
+            lastEvent=millis();
+            interval_mode=I_CONTINOUS;
+          }
+          else{
+            if ((rele.state==RELAY_ON || rele.state==RELAY_WAIT) && (current_state.current_moisture <= current_state.moisture_MAX) )
+            {
+               if(!checkPumpCicle(relaystate,lastEvent)){
+                  if(rele.state==RELAY_ON){
+                  relaystate=false;
+                  rele.state=RELAY_WAIT;
+
+                  }else{
+                    relaystate=true;
+                  rele.state=RELAY_ON;
+                  }
+                  lastEvent=millis();
+               }else{
+               if(rele.state==RELAY_ON){
+                  rele.state=RELAY_ON;
+                  relaystate=true; 
+               }else{
+                 relaystate=false;
+                  rele.state=RELAY_WAIT;
+                  
+               }
+               }
+            }
           }
         }
+        if(current_state.current_moisture >= current_state.moisture_MAX){
+          interval_mode=I_INTERVAL;
+        }
+        
+
       }
-     }
-     break;
-     case R_HUMIDIFIER:
-      
-      if (current_state.current_airHumidity <= current_state.airHMIN)        
-      {       
-          relaystate=true;
-       }  
-       else{
-         if(rele.state==RELAY_ON && current_state.current_airHumidity < current_state.airHRO)
-         {
-           relaystate=true;
-         }
-       }
- 
+      else{
+        rele.state=RELAY_OFF;
+        relaystate=false; 
+        interval_mode=I_INTERVAL;
+      }
       if(relaystate)
       {
-        rele.state=RELAY_ON;
+        //rele.state=RELAY_ON;
         relay_on(relay[i].gpio_pin);
       }
       else
       {
-        rele.state=RELAY_OFF;
+       // rele.state=RELAY_OFF;
         relay_off(rele.gpio_pin);
 
       }
       relay[i]=rele;
-      break;
-    
-    case R_COOLING:
-      
-      if (current_state.current_airTemperature > current_state.airTMAX)        
-      {       
-          relaystate=true;
-       }  
-       else{
-         if(rele.state==RELAY_ON && current_state.current_airTemperature < current_state.airTAO)
-         {
-           relaystate=true;
-         }
-       }
- 
-      if(relaystate)
-      {
-        rele.state=RELAY_ON;
-        relay_on(relay[i].gpio_pin);
-      }
-      else
-      {
-        rele.state=RELAY_OFF;
-        relay_off(rele.gpio_pin);
-
-      }
-      relay[i]=rele;
-      break;
+      break; 
+        
     }
   }
-   }
+}
 
 
 /*
@@ -1298,15 +1323,12 @@ void update_relay_state (void)
  * BY INDICATING PUMP PERCENTAGE.
  * EXAMPLE: PUMP DURING FOUR MINUTES AT 50%. PUMPING WOULD BE ONE MINUTES ON & ONE MINUTES OFF, UNTIL COMPLETION OF THE CICLE OF FOUR MINUTES;
  */
-boolean checkPumpCicle(boolean irrigating,tmElements_t time1,tmElements_t time2){
-  int cicleLength=current_config.pump_cicle_length;
-  int pumppercent= current_config.pump_percent;
-  int totalIrrigationTime= (cicleLength*pumppercent)/100;
-  int intervalTime=cicleLength/totalIrrigationTime;
-
-  if(time_between(time1,time2)<intervalTime-1)
-    irrigating= !irrigating;
-  return irrigating;
+boolean checkPumpCicle(boolean irrigating,long lastEvent){
+  double totalSeconds=((current_sensorsvalues.cached_cicle_length * 60))+current_sensorsvalues.cached_pump_cicle_seconds;
+  totalSeconds= (totalSeconds * current_sensorsvalues.cached_pump_percent)/100;
+  if((millis()-lastEvent)<totalSeconds*1000) return true;
+  else return false;
+  
 } 
 /*
  * DRAW TIME SELECTION MENU
@@ -1510,20 +1532,10 @@ void static drawAbout()
   mylcd.print(F("VERSION "));
   mylcd.print(VERSION);
 } 
-void static drawRoleMenu(State & state)
+
+void static drawSelectStatus(State & state)
 {
-   drawCTime();
-   for (int i=0; i<MAX_RELAYS;i++){
-   mylcd.setPosition(i+2,0);
-   mylcd.print("C");
-   mylcd.print(i+1);
-   mylcd.print(" ");
-   drawRoleInfo(relay[i].role,state);
-  }
-}
-void static drawCTime()
-{
- mylcd.setPosition(1,0);
+  mylcd.setPosition(1,0);
   if(tm.Hour<10) mylcd.print("0");
   mylcd.print(tm.Hour);
   mylcd.print(":");
@@ -1536,12 +1548,16 @@ void static drawCTime()
   if(tm.Month<10) mylcd.print("0");
   mylcd.print(tm.Month);
   mylcd.print("/");
-  mylcd.print(tmYearToCalendar(tm.Year)); 
-}
-void static drawSelectStatus(State & state)
-{
-  mylcd.setPosition(1,0);
-  printTitle(mylcd,translate(S_EDITSTATE));
+  mylcd.print(tmYearToCalendar(tm.Year));
+  if(state.field_capacity)
+  { 
+    mylcd.print(" ");
+    mylcd.print(translate(S_FC));
+  }
+  else
+  {
+    mylcd.print("   "); 
+  }
   //Line2
   mylcd.setPosition(2,0);
   mylcd.print(translate(S_S));
@@ -1572,18 +1588,18 @@ void static drawSelectStatus(State & state)
   if(minutes<100)
     mylcd.print("0");
   if(minutes<10)
-   mylcd.print("0");
+    mylcd.print("0");
   mylcd.print(minutes);
   mylcd.print("'");
-  byte seconds= state.cicle_length_seconds%60;
+  byte seconds= current_sensorsvalues.cached_pump_cicle_seconds;
   if(seconds<10)
     mylcd.print("0");
   mylcd.print(seconds);
   mylcd.print("''");
   mylcd.print("ON");
   if(current_sensorsvalues.cached_pump_percent<100)
-   mylcd.print("0");
-   if(current_sensorsvalues.cached_pump_percent<10)
+    mylcd.print("0");
+  if(current_sensorsvalues.cached_pump_percent<10)
     mylcd.print("0");
   mylcd.print(current_sensorsvalues.cached_pump_percent);
   mylcd.print("%");
@@ -1595,22 +1611,21 @@ void static drawSelectStatus(State & state)
     mylcd.print("0");
   mylcd.print((int)state.temps_max);
   mylcd.print(" ");
-  mylcd.print("MIN:");
-  if(state.temps_min<10)
-    mylcd.print("0");
-  mylcd.print((int)state.temps_min);
+
   mylcd.print(" ");
   int currenttemp=state.current_temps;
   if(currenttemp>=0){
     mylcd.print("+"); 
-  }else{
+  }
+  else{
     if(currenttemp==-1000)
-       mylcd.print("-"); 
+      mylcd.print("-"); 
   }
   if(currenttemp!=-1000){
-  mylcd.print(currenttemp);
-  }else{
-   mylcd.print("--"); 
+    mylcd.print(currenttemp);
+  }
+  else{
+    mylcd.print("--"); 
   }
   mylcd.print("C");
   mylcd.boxCursorOff();
@@ -1648,16 +1663,7 @@ void static drawSelectStatus(State & state)
       mylcd.underlineCursorOn(); 
     }
     break;
-  case S_TSMIN:
-    if(!isEditing){
-      mylcd.setPosition(4,11);
-      mylcd.boxCursorOn(); 
-    }
-    else{
-      mylcd.setPosition(4,14);
-      mylcd.underlineCursorOn(); 
-    }
-    break;
+
   case S_PCICLE:
     if(!isEditing){
       mylcd.setPosition(3,4);
@@ -1678,105 +1684,18 @@ void static drawSelectStatus(State & state)
       mylcd.underlineCursorOn(); 
     }
     break;
+    case S_PCICLESECONDS:
+  
+    if(!isEditing){
+      mylcd.setPosition(3,10);
+      mylcd.boxCursorOn(); 
+    }
+    else{
+      mylcd.setPosition(3,11);
+      mylcd.underlineCursorOn(); 
+    }
+  break;
   }
-}
-void drawHumidificationState(State & state)
-{
-    mylcd.setPosition(1,0);
-    //printTitle(mylcd,translate(S_HUMIDIFIER));
-    mylcd.print("C");
-    mylcd.print(current_rele+1);
-    mylcd.print(":");
-    drawRoleTitle(current_rele);
-    mylcd.setPosition(2,0);
-    mylcd.print(translate(S_AIR_HUMIDITY));
-    mylcd.setPosition(2,4);
-    
-    float airHRO = state.airHRO;
-      
-    mylcd.print(airHRO);
-    mylcd.setPosition(2,7);
-
-    mylcd.print(translate(S_MIN));
-    mylcd.setPosition(2,10);
-    float airHMIN = state.airHMIN;
-    mylcd.print(airHMIN);
-    mylcd.setPosition(2,12);
-    mylcd.print("[");
-    mylcd.print((float)state.current_airHumidity);
-    mylcd.print("]");
-    mylcd.print("%");
-    
-    mylcd.setPosition(3,0);
-    mylcd.print(translate(CICLO));
-    int minutes=state.cicle_length_seconds/60;
-    if(minutes<100)
-      mylcd.print("0");
-    if(minutes<10)
-     mylcd.print("0");
-    mylcd.print(minutes);
-    mylcd.print("'");
-    byte seconds= state.cicle_length_seconds%60;
-    if(seconds<10)
-    mylcd.print("0");
-    mylcd.print(seconds);
-    mylcd.print("''");
-    mylcd.print(translate(S_ON));
-    mylcd.print("100");
-    mylcd.print("%");
-    
-    
-}
-void drawRoleTitle(int current_rele)
-{
-  int role = relay[current_rele].role;
-  switch(role)
- {
-   case R_IRRIGATION:
-    mylcd.print(translate(S_IRRIGATION));
-   break;
-   case R_HUMIDIFIER:
-    mylcd.print(translate(S_HUMIDIFIER));
-   break;
-   case R_COOLING:
-    mylcd.print(translate(S_COOLING));
-   break;
- } 
-}
-void drawCoolingState(State & state)
-{
-  mylcd.setPosition(1,0);
-  mylcd.print("C");
-  mylcd.print(current_rele+1);
-  mylcd.print(":");
-  drawRoleTitle(current_rele);
-  mylcd.setPosition(2,0);
-  mylcd.print(translate(S_AIR_TEMPERATURE));
-  mylcd.print(":");
-  mylcd.print((int)state.airTAO);
-  mylcd.print(" ");
-  mylcd.print(translate(S_TAMAX));
-  mylcd.print((int)state.airTMAX);
-  mylcd.print("[");
-  mylcd.print((int)state.current_airTemperature);
-  mylcd.print("]");
-  mylcd.print("C");
   
 }
-void drawLigthState(State & state)
-{
-    mylcd.setPosition(1,0);
-    printTitle(mylcd,translate(S_LIGHT));
-    mylcd.setPosition(2,0);
-    mylcd.print(translate(S_ON));
-    mylcd.print("21:00H");
-    mylcd.setPosition(3,0);
-    mylcd.print(translate(S_OFF));
-    mylcd.print("23:00H");
-}
 
-
-void handleEventSelectCoolingStatus(int event){
-}
-void handleEventSelectHumidifierStatus(int event){
-}

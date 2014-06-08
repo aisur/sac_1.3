@@ -47,11 +47,9 @@ typedef struct{
   int flow_diameter;//Flow Diameter for Flow Size Sensor
   int active_languaje;//Active Languaje
   int calib_FCapacity;//Field capacity calibration.
-  int airTAO;
-  int airHRO;
-  int airHMIN;
-  int airTMIN;
-  int airTMAX;
+  int interval_time;//IntervalTime
+  int pump_cicle_seconds;
+  
 }Configuration;
 
 /*
@@ -73,11 +71,7 @@ Configuration getDefaultConfig(){
   default_config.flow_diameter=16;
   default_config.active_languaje=0;
   default_config.calib_FCapacity=0;
-  default_config.airTAO=0;
-  default_config.airTMIN=0;
-  default_config.airHRO=0;
-  default_config.airHMIN=0;
-  default_config.airTMAX=45;
+
   return default_config;
 }
 /*
