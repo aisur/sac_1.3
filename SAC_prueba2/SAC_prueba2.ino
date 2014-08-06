@@ -229,6 +229,8 @@ boolean cerrojo_down=1;
 boolean cerrojo_intervalo=HIGH;
 //--------------------------------------------------------------------------
 //SACLCD saclcd(mylcd);
+void setup_pins();
+void static drawSelectStatus(State & state);
 
 void setup()
 {
@@ -291,9 +293,7 @@ void loop(){
       previous_state=current_state;
       lastUpdate=tm;
     }
-    else{
-      actualizar_pantalla=false; 
-    }
+    
   }
 
 
@@ -832,6 +832,7 @@ void handleEventSelection(int event)
   case END_SELECTION:
     current_mstate=ESTADO;
     current_selectionstate=MENU;
+    mylcd.clear();
     actualizar_pantalla=true;
     break;
   }
